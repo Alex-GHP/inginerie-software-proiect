@@ -1,0 +1,138 @@
+@startuml analysis-class-diagram
+
+title Diagrama de Clase - Nivel Analiza
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+' === Enumerari ===
+enum UserRole {
+    USER
+    ADMIN
+    ANALYST
+}
+
+enum AnalysisStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+    ARCHIVED
+}
+
+enum ExportFormat {
+    PDF
+    CSV
+    JSON
+}
+
+enum Language {
+    RO
+    EN
+}
+
+' === Clase de Domeniu ===
+class User {
+    - id: UUID
+    - email: String
+    - name: String
+    - role: UserRole
+    - createdAt: DateTime
+    - lastLogin: DateTime
+    --
+    + authenticate(password): Boolean
+    + getAnalysisHistory(): List<TextAnalysis>
+    + updateProfile(data): void
+}
+
+class TextAnalysis {
+    - id: UUID
+    - text: String
+    - language: Language
+    - status: AnalysisStatus
+    - createdAt: DateTime
+    - updatedAt: DateTime
+    --
+    + process(): ClassificationResult
+    + archive(): void
+    + delete(): void
+}
+
+class ClassificationResult {
+    - id: UUID
+    - leftRightScore: Float
+    - authLibScore: Float
+    - economicScore: Float
+    - socialScore: Float
+    - confidence: Float
+    - keywords: List<String>
+    --
+    + getSpectrum(): PoliticalSpectrum
+    + export(format: ExportFormat): File
+}
+
+class PoliticalSpectrum {
+    - economicAxis: Float
+    - socialAxis: Float
+    - quadrant: String
+    --
+    + getPosition(): String
+    + getDescription(): String
+}
+
+class AnalysisHistory {
+    - id: UUID
+    - accessedAt: DateTime
+    --
+    + getRecent(limit: Int): List<TextAnalysis>
+    + search(query: String): List<TextAnalysis>
+}
+
+class BatchJob {
+    - id: UUID
+    - totalDocuments: Int
+    - processedDocuments: Int
+    - status: AnalysisStatus
+    - createdAt: DateTime
+    - completedAt: DateTime
+    --
+    + getProgress(): Float
+    + cancel(): void
+    + getResults(): List<ClassificationResult>
+}
+
+' === Clase de Servicii ===
+class NLPService <<service>> {
+    --
+    + classify(text: String): ClassificationResult
+    + preprocess(text: String): ProcessedText
+    + extractKeywords(text: String): List<String>
+}
+
+class AuthenticationService <<service>> {
+    --
+    + login(email: String, password: String): Token
+    + logout(token: Token): void
+    + validateToken(token: Token): Boolean
+    + refreshToken(token: Token): Token
+}
+
+class ExportService <<service>> {
+    --
+    + exportToPDF(result: ClassificationResult): File
+    + exportToCSV(results: List<ClassificationResult>): File
+    + exportToJSON(result: ClassificationResult): File
+}
+
+' === Relatii ===
+User "1" -- "0..*" TextAnalysis : creaza
+User "1" -- "1" AnalysisHistory : are
+TextAnalysis "1" -- "0..1" ClassificationResult : are
+ClassificationResult "1" -- "1" PoliticalSpectrum : genereaza
+User "1" -- "0..*" BatchJob : initiaza
+BatchJob "1" -- "1..*" TextAnalysis : contine
+
+NLPService ..> TextAnalysis : proceseaza
+AuthenticationService ..> User : autentifica
+ExportService ..> ClassificationResult : exporta
+
+@enduml

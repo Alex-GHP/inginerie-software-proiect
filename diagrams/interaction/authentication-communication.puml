@@ -1,0 +1,67 @@
+@startuml authentication-communication
+
+title Diagrama de Comunicare - Proces de Autentificare
+
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+object "utilizator : Utilizator" as User
+object "loginPage : LoginPage" as LoginPage
+object "apiClient : APIClient" as APIClient
+object "authController : AuthController" as AuthController
+object "authService : AuthService" as AuthService
+object "userRepository : UserRepository" as UserRepo
+object "jwtGenerator : JWTGenerator" as JWT
+object "passwordHasher : PasswordHasher" as Hasher
+object "cacheService : CacheService" as Cache
+object "database : PostgreSQL" as DB
+
+User --> LoginPage : 1: introduceCredentiale(email, password)
+LoginPage --> LoginPage : 2: valideazaFormat()
+LoginPage --> APIClient : 3: post("/auth/login", credentials)
+APIClient --> AuthController : 4: login(loginRequest)
+AuthController --> AuthService : 5: authenticate(email, password)
+
+AuthService --> UserRepo : 6: findByEmail(email)
+UserRepo --> DB : 7: SELECT FROM users WHERE email = ?
+DB --> UserRepo : 8: userEntity
+UserRepo --> AuthService : 9: User
+
+AuthService --> Hasher : 10: verify(password, storedHash)
+Hasher --> AuthService : 11: isValid Boolean
+
+AuthService --> JWT : 12: generateTokenPair(user)
+JWT --> AuthService : 13: accessToken refreshToken
+
+AuthService --> UserRepo : 14: updateLastLogin(userId)
+UserRepo --> DB : 15: UPDATE users SET last_login = NOW()
+DB --> UserRepo : 16: OK
+
+AuthService --> Cache : 17: set(session userId, sessionData)
+Cache --> AuthService : 18: OK
+
+AuthService --> AuthController : 19: TokenResponse
+AuthController --> APIClient : 20: 200 OK tokens
+APIClient --> LoginPage : 21: LoginResult Success
+LoginPage --> LoginPage : 22: salveazaTokenLocal()
+LoginPage --> User : 23: redirectToDashboard()
+
+note right of AuthService
+  Serviciul de autentificare
+  coordoneaza fluxul de
+  verificare si generare tokens
+end note
+
+note left of JWT
+  JWT Generator creaza
+  access token (15min) si
+  refresh token (7 zile)
+end note
+
+note bottom of Cache
+  Redis stocheaza
+  sesiunea pentru
+  invalidare rapida
+end note
+
+@enduml

@@ -1,0 +1,342 @@
+@startuml detailed-class-diagram
+
+title Diagrama de Clase Detaliata - Arhitectura pe Straturi
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+' =====================================================
+' STRATUL DE PREZENTARE (Frontend)
+' =====================================================
+package "Stratul de Prezentare" #LightBlue {
+    
+    class LoginPage <<React Component>> {
+        - email: String
+        - password: String
+        - isLoading: Boolean
+        - error: String
+        --
+        + handleLogin(): void
+        + handleForgotPassword(): void
+        + validateForm(): Boolean
+        + render(): JSX
+    }
+    
+    class DashboardPage <<React Component>> {
+        - user: User
+        - recentAnalyses: List<TextAnalysis>
+        - statistics: Statistics
+        --
+        + loadData(): void
+        + navigateToClassification(): void
+        + render(): JSX
+    }
+    
+    class ClassificationPage <<React Component>> {
+        - inputText: String
+        - selectedLanguage: Language
+        - isProcessing: Boolean
+        - result: ClassificationResult
+        --
+        + handleSubmit(): void
+        + handleFileUpload(file: File): void
+        + displayResults(): void
+        + render(): JSX
+    }
+    
+    class ResultsVisualization <<React Component>> {
+        - result: ClassificationResult
+        - chartType: String
+        --
+        + renderRadarChart(): JSX
+        + renderPoliticalCompass(): JSX
+        + renderKeywordCloud(): JSX
+        + handleExport(format: ExportFormat): void
+        + render(): JSX
+    }
+    
+    class HistoryPage <<React Component>> {
+        - analyses: List<TextAnalysis>
+        - filters: FilterOptions
+        - pagination: PaginationState
+        --
+        + loadAnalyses(): void
+        + applyFilters(): void
+        + handleSearch(query: String): void
+        + render(): JSX
+    }
+    
+    class APIClient <<Singleton>> {
+        - baseURL: String
+        - authToken: String
+        --
+        + getInstance(): APIClient
+        + setAuthToken(token: String): void
+        + get(endpoint: String): Promise
+        + post(endpoint: String, data: Object): Promise
+        + put(endpoint: String, data: Object): Promise
+        + delete(endpoint: String): Promise
+    }
+}
+
+' =====================================================
+' STRATUL DE BUSINESS LOGIC (Backend API)
+' =====================================================
+package "Stratul de Business Logic" #LightGreen {
+    
+    class AuthController <<FastAPI Router>> {
+        --
+        + login(credentials: LoginRequest): TokenResponse
+        + register(data: RegisterRequest): UserResponse
+        + logout(token: String): void
+        + refreshToken(token: String): TokenResponse
+        + resetPassword(email: String): void
+    }
+    
+    class AnalysisController <<FastAPI Router>> {
+        --
+        + createAnalysis(request: AnalysisRequest): AnalysisResponse
+        + getAnalysis(id: UUID): AnalysisResponse
+        + deleteAnalysis(id: UUID): void
+        + listAnalyses(filters: FilterParams): PaginatedResponse
+        + exportAnalysis(id: UUID, format: ExportFormat): FileResponse
+    }
+    
+    class BatchController <<FastAPI Router>> {
+        --
+        + createBatchJob(files: List): BatchJobResponse
+        + getBatchStatus(id: UUID): BatchStatusResponse
+        + cancelBatch(id: UUID): void
+        + getBatchResults(id: UUID): List
+    }
+    
+    class AdminController <<FastAPI Router>> {
+        --
+        + listUsers(filters: FilterParams): PaginatedResponse
+        + updateUser(id: UUID, data: UserUpdate): UserResponse
+        + deleteUser(id: UUID): void
+        + getSystemStats(): StatisticsResponse
+    }
+    
+    class AuthService {
+        - userRepository: UserRepository
+        - passwordHasher: PasswordHasher
+        - tokenGenerator: JWTGenerator
+        --
+        + authenticate(email: String, password: String): User
+        + createUser(data: RegisterDTO): User
+        + validateToken(token: String): TokenPayload
+        + generateTokenPair(user: User): TokenPair
+    }
+    
+    class AnalysisService {
+        - analysisRepository: AnalysisRepository
+        - nlpClient: NLPClient
+        - cacheService: CacheService
+        --
+        + createAnalysis(userId: UUID, text: String, language: Language): TextAnalysis
+        + processAnalysis(analysisId: UUID): ClassificationResult
+        + getAnalysisById(id: UUID): TextAnalysis
+        + getUserAnalyses(userId: UUID, pagination: Pagination): List
+    }
+    
+    class NLPClient {
+        - modelEndpoint: String
+        - httpClient: HttpClient
+        - retryPolicy: RetryPolicy
+        --
+        + classify(text: String): RawClassificationResult
+        + preprocess(text: String): ProcessedText
+        + extractKeywords(text: String): List
+        + batchClassify(texts: List): List
+    }
+    
+    class ExportService {
+        - templateEngine: TemplateEngine
+        - pdfGenerator: PDFGenerator
+        --
+        + generatePDF(result: ClassificationResult): ByteStream
+        + generateCSV(results: List): ByteStream
+        + generateJSON(result: ClassificationResult): String
+    }
+    
+    class CacheService {
+        - redisClient: RedisClient
+        - ttl: Int
+        --
+        + get(key: String): Object
+        + set(key: String, value: Object, ttl: Int): void
+        + delete(key: String): void
+        + invalidatePattern(pattern: String): void
+    }
+    
+    class QueueService {
+        - rabbitMQClient: RabbitMQClient
+        --
+        + enqueue(task: Task): void
+        + dequeue(): Task
+        + acknowledge(taskId: String): void
+    }
+}
+
+' =====================================================
+' STRATUL DE DATE (Persistenta)
+' =====================================================
+package "Stratul de Date" #LightYellow {
+    
+    class UserEntity <<SQLAlchemy Model>> {
+        + id: UUID
+        + email: String
+        + password_hash: String
+        + name: String
+        + role: UserRole
+        + is_active: Boolean
+        + created_at: DateTime
+        + updated_at: DateTime
+        + last_login: DateTime
+    }
+    
+    class TextAnalysisEntity <<SQLAlchemy Model>> {
+        + id: UUID
+        + user_id: UUID
+        + text_content: Text
+        + language: String
+        + status: AnalysisStatus
+        + created_at: DateTime
+        + updated_at: DateTime
+    }
+    
+    class ClassificationResultEntity <<SQLAlchemy Model>> {
+        + id: UUID
+        + analysis_id: UUID
+        + left_right_score: Decimal
+        + auth_lib_score: Decimal
+        + economic_score: Decimal
+        + social_score: Decimal
+        + confidence: Decimal
+        + keywords: JSONB
+        + created_at: DateTime
+    }
+    
+    class BatchJobEntity <<SQLAlchemy Model>> {
+        + id: UUID
+        + user_id: UUID
+        + total_documents: Integer
+        + processed_documents: Integer
+        + status: AnalysisStatus
+        + created_at: DateTime
+        + completed_at: DateTime
+    }
+    
+    class UserRepository <<Repository>> {
+        - session: Session
+        --
+        + findById(id: UUID): UserEntity
+        + findByEmail(email: String): UserEntity
+        + save(user: UserEntity): UserEntity
+        + update(user: UserEntity): UserEntity
+        + delete(id: UUID): void
+        + findAll(pagination: Pagination): List
+    }
+    
+    class AnalysisRepository <<Repository>> {
+        - session: Session
+        --
+        + findById(id: UUID): TextAnalysisEntity
+        + findByUserId(userId: UUID, pagination: Pagination): List
+        + save(analysis: TextAnalysisEntity): TextAnalysisEntity
+        + updateStatus(id: UUID, status: AnalysisStatus): void
+        + delete(id: UUID): void
+    }
+    
+    class ResultRepository <<Repository>> {
+        - session: Session
+        --
+        + findByAnalysisId(analysisId: UUID): ClassificationResultEntity
+        + save(result: ClassificationResultEntity): ClassificationResultEntity
+    }
+}
+
+' =====================================================
+' STRATUL NLP (Machine Learning)
+' =====================================================
+package "Stratul NLP" #LightPink {
+    
+    class TextPreprocessor {
+        - tokenizer: Tokenizer
+        - stopwords: Set
+        --
+        + clean(text: String): String
+        + tokenize(text: String): List
+        + normalize(tokens: List): List
+        + removeStopwords(tokens: List): List
+    }
+    
+    class TransformerModel {
+        - model: PreTrainedModel
+        - tokenizer: PreTrainedTokenizer
+        - device: Device
+        --
+        + load(modelPath: String): void
+        + predict(text: String): Tensor
+        + batchPredict(texts: List): List
+    }
+    
+    class IdeologyClassifier {
+        - model: TransformerModel
+        - preprocessor: TextPreprocessor
+        - postprocessor: ResultPostprocessor
+        --
+        + classify(text: String): ClassificationOutput
+        + getConfidence(output: Tensor): Float
+    }
+    
+    class KeywordExtractor {
+        - tfidfVectorizer: TfidfVectorizer
+        - politicalLexicon: Dict
+        --
+        + extract(text: String, topK: Int): List
+        + scorePoliticalRelevance(keyword: String): Float
+    }
+    
+    class ResultPostprocessor {
+        --
+        + normalizeScores(rawScores: Tensor): NormalizedScores
+        + mapToQuadrant(scores: NormalizedScores): String
+        + calculateOverallConfidence(predictions: List): Float
+    }
+}
+
+' =====================================================
+' RELATII INTRE STRATURI
+' =====================================================
+
+LoginPage ..> APIClient : foloseste
+DashboardPage ..> APIClient : foloseste
+ClassificationPage ..> APIClient : foloseste
+HistoryPage ..> APIClient : foloseste
+
+AuthController ..> AuthService : foloseste
+AnalysisController ..> AnalysisService : foloseste
+AnalysisController ..> ExportService : foloseste
+BatchController ..> QueueService : foloseste
+AdminController ..> AuthService : foloseste
+
+AuthService ..> UserRepository : foloseste
+AnalysisService ..> AnalysisRepository : foloseste
+AnalysisService ..> ResultRepository : foloseste
+AnalysisService ..> NLPClient : foloseste
+AnalysisService ..> CacheService : foloseste
+
+NLPClient ..> IdeologyClassifier : apeleaza
+IdeologyClassifier ..> TransformerModel : foloseste
+IdeologyClassifier ..> TextPreprocessor : foloseste
+IdeologyClassifier ..> ResultPostprocessor : foloseste
+NLPClient ..> KeywordExtractor : apeleaza
+
+UserEntity "1" -- "0..*" TextAnalysisEntity
+TextAnalysisEntity "1" -- "0..1" ClassificationResultEntity
+UserEntity "1" -- "0..*" BatchJobEntity
+BatchJobEntity "1" -- "1..*" TextAnalysisEntity
+
+@enduml

@@ -1,0 +1,141 @@
+@startuml batch-processing-activity
+
+title Diagrama de Activitate - Procesare Batch Documente
+
+|#LightBlue|Utilizator|
+|#LightGreen|Sistem Frontend|
+|#LightYellow|API Backend|
+|#LightPink|Queue Worker|
+|#Orange|Serviciu NLP|
+|#Lavender|Bază de Date|
+
+|Utilizator|
+start
+:Accesează pagina "Procesare Batch";
+
+|Sistem Frontend|
+:Afișează interfața de upload multiplu;
+
+|Utilizator|
+:Selectează fișiere multiple;
+note right
+    Formate acceptate:
+    .txt, .pdf, .docx
+    Max 50 fișiere
+end note
+
+|Sistem Frontend|
+:Validare număr fișiere;
+:Validare format fișiere;
+:Validare dimensiune totală;
+
+if (Validare reușită?) then (da)
+    :Afișează preview fișiere;
+    :Afișează opțiuni batch;
+else (nu)
+    :Afișează erori specifice;
+    |Utilizator|
+    :Corectează selecția;
+    stop
+endif
+
+|Utilizator|
+:Configurează opțiuni analiză;
+:Apasă "Începe Procesarea";
+
+|Sistem Frontend|
+:Afișează progress bar global;
+:Trimite fișiere către API;
+
+|API Backend|
+:Primește request batch;
+:Creare BatchJob în DB;
+
+|Bază de Date|
+:Salvare BatchJob (status: queued);
+
+|API Backend|
+while (pentru fiecare fișier) is (mai sunt fișiere)
+    :Extrage text din fișier;
+    :Creare TextAnalysis;
+    |Bază de Date|
+    :Salvare TextAnalysis (status: pending);
+    |API Backend|
+    :Adaugă în coada de procesare;
+    |Queue Worker|
+    :Primire task din coadă;
+end while (toate procesate)
+
+|API Backend|
+:Returnează batch_id;
+
+|Sistem Frontend|
+:Pornire polling status;
+
+' === Procesare Asincronă ===
+|Queue Worker|
+fork
+    :Procesare Document 1;
+    |Serviciu NLP|
+    :Clasificare text 1;
+    |Queue Worker|
+fork again
+    :Procesare Document 2;
+    |Serviciu NLP|
+    :Clasificare text 2;
+    |Queue Worker|
+fork again
+    :... Documente N;
+    |Serviciu NLP|
+    :Clasificare text N;
+    |Queue Worker|
+end fork
+
+:Agregare rezultate;
+
+|Bază de Date|
+:Actualizare status documente;
+:Actualizare BatchJob (status: completed);
+
+|Sistem Frontend|
+:Detectare completare (polling);
+:Afișare rezultate agregate;
+
+|Utilizator|
+:Vizualizare sumar batch;
+
+if (Vizualizare detalii?) then (da)
+    |Sistem Frontend|
+    :Afișare rezultate individuale;
+    
+    |Utilizator|
+    while (pentru fiecare document) is (mai sunt)
+        :Selectare document;
+        |Sistem Frontend|
+        :Afișare grafice document;
+    end while (toate vizualizate)
+else (nu)
+endif
+
+if (Export rezultate?) then (da)
+    |Utilizator|
+    :Selectare format export;
+    
+    |Sistem Frontend|
+    :Generare raport agregat;
+    
+    if (Format selectat?) then (CSV)
+        :Generare CSV cu toate rezultatele;
+    else (PDF)
+        :Generare PDF cu grafice și tabele;
+    endif
+    
+    |Utilizator|
+    :Descărcare raport;
+else (nu)
+endif
+
+stop
+
+@enduml
+

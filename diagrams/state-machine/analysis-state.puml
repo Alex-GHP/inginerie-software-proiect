@@ -1,0 +1,134 @@
+@startuml analysis-state
+
+title Diagrama de Stare - Ciclul de Viata al unei Analize
+
+skinparam state {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+    ArrowColor DarkBlue
+}
+
+[*] --> Initializata : creare analiza
+
+state Initializata {
+    [*] --> Validare
+    Validare : Verificare text
+    Validare : Verificare limba
+    Validare --> [*] : valid
+}
+
+Initializata --> InAsteptare : text validat
+Initializata --> Esuata : validare esuata
+
+state InAsteptare {
+    [*] --> InCoada
+    InCoada : Pozitie in coada
+    InCoada : Timp estimat
+}
+
+InAsteptare --> InProcesare : preluare din coada
+
+state InProcesare {
+    [*] --> Preprocesare
+    
+    state Preprocesare {
+        [*] --> Tokenizare
+        Tokenizare --> Normalizare
+        Normalizare --> CuratareText
+        CuratareText --> [*]
+    }
+    
+    Preprocesare --> Clasificare
+    
+    state Clasificare {
+        [*] --> InferentaModel
+        InferentaModel : Aplicare Transformer
+        InferentaModel --> ExtragereKeywords
+        ExtragereKeywords --> CalculScoruri
+        CalculScoruri --> [*]
+    }
+    
+    Clasificare --> Postprocesare
+    
+    state Postprocesare {
+        [*] --> NormalizareScoruri
+        NormalizareScoruri --> CalculIncredere
+        CalculIncredere --> FormatareRezultate
+        FormatareRezultate --> [*]
+    }
+}
+
+InProcesare --> Completata : procesare reusita
+InProcesare --> Esuata : eroare procesare
+
+state Completata {
+    [*] --> Disponibila
+    Disponibila : Rezultate accesibile
+    Disponibila : Export disponibil
+    
+    Disponibila --> Vizualizata : utilizator acceseaza
+    Vizualizata --> Disponibila
+    
+    Disponibila --> Exportata : export generat
+    Exportata --> Disponibila
+}
+
+Completata --> Arhivata : arhivare manuala
+Completata --> Arhivata : expirare automata (90 zile)
+
+state Esuata {
+    [*] --> EroareValidare
+    [*] --> EroareNLP
+    [*] --> EroareSistem
+    
+    EroareValidare : Text invalid
+    EroareValidare : Limba nesuportata
+    
+    EroareNLP : Model indisponibil
+    EroareNLP : Timeout procesare
+    
+    EroareSistem : Eroare baza de date
+    EroareSistem : Eroare interna
+}
+
+Esuata --> InAsteptare : retry manual
+Esuata --> Stearsa : stergere
+
+state Arhivata {
+    [*] --> Comprimata
+    Comprimata : Date comprimate
+    Comprimata : Stocare cold storage
+}
+
+Arhivata --> Completata : restaurare
+Arhivata --> Stearsa : stergere permanenta
+
+state Stearsa {
+    [*] --> [*]
+}
+Stearsa : Soft delete
+Stearsa : Retentie 30 zile
+
+Stearsa --> [*] : purge final
+
+note right of InProcesare
+  Timpul mediu de procesare:
+  - Texte scurte (<500 cuvinte): ~2s
+  - Texte medii (500-2000): ~5s
+  - Texte lungi (>2000): ~10s
+end note
+
+note left of Completata
+  Rezultatele sunt cache-uite
+  in Redis pentru acces rapid
+  TTL: 1 ora
+end note
+
+note bottom of Arhivata
+  Analizele mai vechi de
+  90 zile sunt arhivate
+  automat pentru a reduce
+  costurile de stocare
+end note
+
+@enduml

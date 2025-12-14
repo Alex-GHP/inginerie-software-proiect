@@ -1,0 +1,161 @@
+@startuml classification-sequence
+
+title Diagrama de Secvență - Clasificare Text
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 10
+skinparam maxmessagesize 200
+
+actor Utilizator as U
+participant "Frontend\n(React)" as FE
+participant "API Gateway\n(FastAPI)" as API
+participant "Auth Service" as Auth
+participant "Analysis Service" as AS
+participant "Cache\n(Redis)" as Cache
+participant "NLP Service" as NLP
+database "PostgreSQL" as DB
+
+== Autentificare Implicită ==
+U -> FE : Accesează pagina de clasificare
+activate FE
+FE -> FE : Verificare token JWT local
+FE -> API : GET /api/user/me\n[Authorization: Bearer <token>]
+activate API
+API -> Auth : validateToken(token)
+activate Auth
+Auth --> API : TokenPayload {userId, role}
+deactivate Auth
+API --> FE : 200 OK {user data}
+deactivate API
+
+== Introducere și Validare Text ==
+U -> FE : Introduce text pentru analiză
+FE -> FE : Validare client-side\n(lungime, format)
+FE -> U : Afișare preview și opțiuni
+
+U -> FE : Click "Analizează"
+FE -> FE : Pregătire request payload
+
+== Creare Analiză ==
+FE -> API : POST /api/analyses\n{text, language, options}
+activate API
+
+API -> Auth : validateToken(token)
+activate Auth
+Auth --> API : valid
+deactivate Auth
+
+API -> AS : createAnalysis(userId, text, language)
+activate AS
+
+AS -> DB : INSERT INTO text_analyses\n(user_id, text_content, status='pending')
+activate DB
+DB --> AS : analysisId
+deactivate DB
+
+AS --> API : TextAnalysis {id, status: 'pending'}
+deactivate AS
+
+API --> FE : 201 Created {analysisId, status: 'pending'}
+deactivate API
+
+FE -> U : Afișare indicator progres
+
+== Procesare NLP ==
+FE -> API : POST /api/analyses/{id}/process
+activate API
+
+API -> AS : processAnalysis(analysisId)
+activate AS
+
+AS -> Cache : get("analysis:{id}")
+activate Cache
+Cache --> AS : null (cache miss)
+deactivate Cache
+
+AS -> DB : SELECT * FROM text_analyses WHERE id = ?
+activate DB
+DB --> AS : TextAnalysis entity
+deactivate DB
+
+AS -> DB : UPDATE text_analyses\nSET status = 'processing'
+activate DB
+DB --> AS : OK
+deactivate DB
+
+AS -> NLP : classify(text)
+activate NLP
+
+NLP -> NLP : preprocess(text)
+note right of NLP
+  - Tokenizare
+  - Normalizare
+  - Eliminare stopwords
+end note
+
+NLP -> NLP : model.predict(processedText)
+note right of NLP
+  Model Transformer
+  (BERT/RoBERTa)
+end note
+
+NLP -> NLP : extractKeywords(text)
+
+NLP -> NLP : postprocess(rawResults)
+note right of NLP
+  - Normalizare scoruri [0,1]
+  - Calcul încredere
+  - Mapare pe cadran
+end note
+
+NLP --> AS : ClassificationOutput {\n  leftRightScore: 0.35,\n  authLibScore: 0.62,\n  economicScore: 0.40,\n  socialScore: 0.58,\n  confidence: 0.87,\n  keywords: [...]\n}
+deactivate NLP
+
+AS -> DB : INSERT INTO classification_results\n(analysis_id, scores, keywords)
+activate DB
+DB --> AS : resultId
+deactivate DB
+
+AS -> DB : UPDATE text_analyses\nSET status = 'completed'
+activate DB
+DB --> AS : OK
+deactivate DB
+
+AS -> Cache : set("analysis:{id}", result, TTL=3600)
+activate Cache
+Cache --> AS : OK
+deactivate Cache
+
+AS --> API : ClassificationResult
+deactivate AS
+
+API --> FE : 200 OK {result}
+deactivate API
+
+== Afișare Rezultate ==
+FE -> FE : Parsare răspuns JSON
+FE -> FE : Generare grafic radar
+FE -> FE : Generare compas politic
+FE -> FE : Afișare cuvinte cheie
+FE -> U : Afișare rezultate complete
+deactivate FE
+
+== Export Opțional ==
+opt Utilizatorul dorește export
+    U -> FE : Click "Export PDF"
+    activate FE
+    FE -> API : GET /api/analyses/{id}/export?format=pdf
+    activate API
+    API -> AS : generateExport(analysisId, 'pdf')
+    activate AS
+    AS -> AS : Generare PDF cu grafice
+    AS --> API : ByteStream (PDF)
+    deactivate AS
+    API --> FE : 200 OK [binary/pdf]
+    deactivate API
+    FE -> U : Download fișier PDF
+    deactivate FE
+end
+
+@enduml
+

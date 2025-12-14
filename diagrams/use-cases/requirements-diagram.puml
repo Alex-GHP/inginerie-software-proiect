@@ -1,0 +1,81 @@
+@startuml requirements-diagram
+
+title Diagrama Cerintelor - Sistem Clasificare Ideologie Politica
+
+skinparam packageStyle rectangle
+skinparam rectangleBackgroundColor #f5f5f5
+
+' === Cerinte Functionale ===
+package "Cerinte Functionale" #LightBlue {
+    
+    package "CF - Autentificare" #LightCyan {
+        rectangle "CF01: Autentificare utilizatori\n[Obligatoriu]" as CF01
+        rectangle "CF02: Inregistrare cont\n[Obligatoriu]" as CF02
+        rectangle "CF03: Resetare parola\n[Important]" as CF03
+    }
+    
+    package "CF - Analiza" #LightGreen {
+        rectangle "CF04: Incarcare text\n[Obligatoriu]" as CF04
+        rectangle "CF05: Clasificare ideologica\n[Obligatoriu]" as CF05
+        rectangle "CF06: Analiza multi-axa\n[Obligatoriu]" as CF06
+        rectangle "CF07: Procesare batch\n[Important]" as CF07
+    }
+    
+    package "CF - Rezultate" #LightYellow {
+        rectangle "CF08: Vizualizare rezultate\n[Obligatoriu]" as CF08
+        rectangle "CF09: Export rezultate\n[Important]" as CF09
+        rectangle "CF10: Comparare texte\n[Optional]" as CF10
+    }
+    
+    package "CF - Istoric" #LightPink {
+        rectangle "CF11: Salvare istoric\n[Important]" as CF11
+        rectangle "CF12: Cautare in istoric\n[Optional]" as CF12
+    }
+    
+    package "CF - API" #Lavender {
+        rectangle "CF13: API REST\n[Optional]" as CF13
+    }
+}
+
+' === Cerinte Non-Functionale ===
+package "Cerinte Non-Functionale" #LightCoral {
+    
+    package "CNF - Performanta" {
+        rectangle "CNF01: Timp raspuns < 5s\n[Obligatoriu]" as CNF01
+        rectangle "CNF02: 100+ utilizatori concurenti\n[Important]" as CNF02
+    }
+    
+    package "CNF - Calitate" {
+        rectangle "CNF03: Acuratete > 85%\n[Obligatoriu]" as CNF03
+        rectangle "CNF04: Uptime 99.5%\n[Important]" as CNF04
+    }
+    
+    package "CNF - Securitate" {
+        rectangle "CNF05: HTTPS obligatoriu\n[Obligatoriu]" as CNF05
+        rectangle "CNF06: Criptare date\n[Obligatoriu]" as CNF06
+    }
+    
+    package "CNF - Usabilitate" {
+        rectangle "CNF07: Timp invatare < 15min\n[Important]" as CNF07
+        rectangle "CNF08: Suport multilingv\n[Optional]" as CNF08
+    }
+}
+
+' === Dependente ===
+CF05 --> CF04 : depinde de
+CF06 --> CF05 : depinde de
+CF08 --> CF05 : depinde de
+CF09 --> CF08 : depinde de
+CF10 --> CF08 : depinde de
+CF11 --> CF05 : depinde de
+CF12 --> CF11 : depinde de
+CF07 --> CF04 : depinde de
+CF13 --> CF05 : depinde de
+
+' === Satisface ===
+CF05 ..> CNF01 : satisface
+CF05 ..> CNF03 : satisface
+CF01 ..> CNF05 : satisface
+CF01 ..> CNF06 : satisface
+
+@enduml

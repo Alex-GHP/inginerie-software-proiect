@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificare Text - Clasificare Ideologie Politică</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-900">
+    
+    <!-- Same Sidebar as Dashboard -->
+    <aside class="fixed inset-y-0 left-0 w-64 bg-slate-800 border-r border-slate-700">
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-700">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-white font-bold text-sm">Political NLP</h1>
+                <p class="text-slate-400 text-xs">Clasificare Ideologie</p>
+            </div>
+        </div>
+        
+        <nav class="px-4 py-6 space-y-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-white bg-purple-500/20 rounded-xl border border-purple-500/30">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                </svg>
+                <span class="font-medium">Clasificare Text</span>
+            </a>
+            <a href="history.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Istoric Analize</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                </svg>
+                <span>Procesare Batch</span>
+            </a>
+        </nav>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold">
+                    MA
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-white font-medium text-sm truncate">Maria Andrei</p>
+                    <p class="text-slate-400 text-xs truncate">maria@email.com</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="ml-64 p-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-white">Clasificare Text</h1>
+            <p class="text-slate-400 mt-1">Introduceți textul pentru analiză ideologică</p>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-8">
+            <!-- Left Column - Input -->
+            <div class="col-span-2 space-y-6">
+                
+                <!-- Text Input Card -->
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white">Text pentru Analiză</h3>
+                        <div class="flex items-center gap-2">
+                            <button class="px-3 py-1.5 text-sm text-slate-400 hover:text-white bg-slate-700 rounded-lg transition">
+                                Paste
+                            </button>
+                            <button class="px-3 py-1.5 text-sm text-slate-400 hover:text-white bg-slate-700 rounded-lg transition">
+                                Upload Fișier
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <textarea 
+                        class="w-full h-64 px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                        placeholder="Introduceți sau lipiți textul aici pentru analiză...
+
+Exemplu: Un discurs politic, un articol de opinie, o declarație publică sau orice text cu conținut politic care doriți să fie clasificat pe spectrul ideologic."></textarea>
+                    
+                    <!-- Text Stats -->
+                    <div class="flex items-center justify-between mt-4 text-sm">
+                        <div class="flex items-center gap-4 text-slate-400">
+                            <span>0 caractere</span>
+                            <span>0 cuvinte</span>
+                        </div>
+                        <span class="text-slate-500">Min. 100 caractere | Max. 50,000 caractere</span>
+                    </div>
+                </div>
+                
+                <!-- Options Card -->
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <h3 class="text-lg font-semibold text-white mb-4">Opțiuni Analiză</h3>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Language Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Limba Textului</label>
+                            <select class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="ro">🇷🇴 Română</option>
+                                <option value="en">🇬🇧 Engleză</option>
+                                <option value="auto">🔍 Detectare automată</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Analysis Depth -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Profunzime Analiză</label>
+                            <select class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="standard">Standard</option>
+                                <option value="detailed">Detaliată</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Checkboxes -->
+                    <div class="mt-6 space-y-3">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-5 h-5 rounded border-slate-600 bg-slate-900/50 text-purple-500 focus:ring-purple-500">
+                            <span class="text-slate-300">Extrage cuvinte cheie</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 rounded border-slate-600 bg-slate-900/50 text-purple-500 focus:ring-purple-500">
+                            <span class="text-slate-300">Include analiză sentiment</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" class="w-5 h-5 rounded border-slate-600 bg-slate-900/50 text-purple-500 focus:ring-purple-500">
+                            <span class="text-slate-300">Salvează în istoric</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <button class="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    Analizează Textul
+                </button>
+            </div>
+            
+            <!-- Right Column - Info -->
+            <div class="space-y-6">
+                <!-- How It Works -->
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <h3 class="text-lg font-semibold text-white mb-4">Cum Funcționează</h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-purple-400 font-bold text-sm">1</span>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-medium text-sm">Introduceți Textul</h4>
+                                <p class="text-slate-400 text-sm mt-0.5">Lipiți sau încărcați textul pentru analiză</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-purple-400 font-bold text-sm">2</span>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-medium text-sm">Procesare NLP</h4>
+                                <p class="text-slate-400 text-sm mt-0.5">Modelul AI analizează textul</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-purple-400 font-bold text-sm">3</span>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-medium text-sm">Vizualizare Rezultate</h4>
+                                <p class="text-slate-400 text-sm mt-0.5">Primiți clasificarea pe spectrul politic</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Political Compass Legend -->
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <h3 class="text-lg font-semibold text-white mb-4">Compas Politic</h3>
+                    <div class="aspect-square relative bg-slate-900/50 rounded-xl p-4">
+                        <!-- Grid -->
+                        <div class="absolute inset-4 border border-slate-600"></div>
+                        <div class="absolute top-4 bottom-4 left-1/2 w-px bg-slate-600"></div>
+                        <div class="absolute left-4 right-4 top-1/2 h-px bg-slate-600"></div>
+                        
+                        <!-- Quadrant Labels -->
+                        <div class="absolute top-6 left-6 text-xs text-red-400">Stânga<br>Autoritariană</div>
+                        <div class="absolute top-6 right-6 text-xs text-blue-400 text-right">Dreapta<br>Autoritariană</div>
+                        <div class="absolute bottom-6 left-6 text-xs text-green-400">Stânga<br>Libertariană</div>
+                        <div class="absolute bottom-6 right-6 text-xs text-yellow-400 text-right">Dreapta<br>Libertariană</div>
+                        
+                        <!-- Axis Labels -->
+                        <div class="absolute top-1 left-1/2 -translate-x-1/2 text-xs text-slate-500">Autoritar</div>
+                        <div class="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-slate-500">Libertarian</div>
+                        <div class="absolute left-1 top-1/2 -translate-y-1/2 text-xs text-slate-500 -rotate-90">Stânga</div>
+                        <div class="absolute right-1 top-1/2 -translate-y-1/2 text-xs text-slate-500 rotate-90">Dreapta</div>
+                    </div>
+                </div>
+                
+                <!-- Tips -->
+                <div class="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl p-6 border border-purple-500/20">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-medium mb-1">Sfat</h4>
+                            <p class="text-slate-400 text-sm">Pentru rezultate mai precise, folosiți texte mai lungi (peste 500 de cuvinte) care conțin poziții clare pe teme politice.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+

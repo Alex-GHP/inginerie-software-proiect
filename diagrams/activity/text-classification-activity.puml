@@ -1,0 +1,124 @@
+@startuml text-classification-activity
+
+title Diagrama de Activitate - Proces de Clasificare Text
+
+|#LightBlue|Utilizator|
+|#LightGreen|Sistem Frontend|
+|#LightYellow|API Backend|
+|#LightPink|Serviciu NLP|
+|#Lavender|Bază de Date|
+
+|Utilizator|
+start
+:Accesează pagina de clasificare;
+:Introduce text sau încarcă fișier;
+
+|Sistem Frontend|
+:Validare input client-side;
+
+if (Text valid?) then (da)
+    :Trimite request către API;
+else (nu)
+    :Afișează mesaj eroare;
+    |Utilizator|
+    :Corectează input-ul;
+    stop
+endif
+
+|API Backend|
+:Primește request;
+:Autentificare token JWT;
+
+if (Token valid?) then (da)
+    :Extrage textul din request;
+else (nu)
+    |Sistem Frontend|
+    :Afișează eroare autentificare;
+    |Utilizator|
+    :Redirecționare la login;
+    stop
+endif
+
+:Validare text server-side;
+
+if (Text suficient de lung?) then (da)
+    :Creare obiect TextAnalysis;
+    |Bază de Date|
+    :Salvare analiză (status: pending);
+else (nu)
+    |Sistem Frontend|
+    :Afișează eroare "Text prea scurt";
+    |Utilizator|
+    stop
+endif
+
+|API Backend|
+:Trimitere text către serviciul NLP;
+
+|Serviciu NLP|
+fork
+    :Tokenizare text;
+fork again
+    :Normalizare și curățare;
+end fork
+
+:Aplicare model Transformer;
+
+fork
+    :Calcul scor stânga-dreapta;
+fork again
+    :Calcul scor autoritar-libertarian;
+fork again
+    :Calcul scor economic;
+fork again
+    :Calcul scor social;
+end fork
+
+:Extragere cuvinte cheie;
+:Calcul nivel de încredere;
+:Creare obiect ClassificationResult;
+
+|API Backend|
+:Primire rezultate NLP;
+
+|Bază de Date|
+:Salvare rezultate clasificare;
+:Actualizare status (completed);
+
+|API Backend|
+:Formatare răspuns JSON;
+
+|Sistem Frontend|
+:Primire și parsare răspuns;
+:Generare grafic radar;
+:Generare poziție pe compas politic;
+:Afișare cuvinte cheie;
+:Afișare nivel de încredere;
+
+|Utilizator|
+:Vizualizare rezultate;
+
+if (Dorește export?) then (da)
+    :Selectare format export;
+    |Sistem Frontend|
+    :Generare fișier export;
+    |Utilizator|
+    :Descărcare fișier;
+else (nu)
+endif
+
+if (Dorește analiză nouă?) then (da)
+    |Utilizator|
+    :Introduce text nou;
+    note right
+        Se reia procesul
+        de la început
+    end note
+else (nu)
+    :Finalizare sesiune;
+endif
+
+stop
+
+@enduml
+

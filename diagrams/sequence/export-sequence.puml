@@ -1,0 +1,205 @@
+@startuml export-sequence
+
+title Diagrama de Secvență - Export Rezultate
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 10
+skinparam maxmessagesize 180
+
+actor "Utilizator" as User
+participant "Browser\n(React)" as Browser
+participant "API Gateway" as Gateway
+participant "Export\nController" as ExportCtrl
+participant "Export\nService" as ExportSvc
+participant "Template\nEngine" as Template
+participant "PDF\nGenerator" as PDFGen
+participant "Chart\nRenderer" as ChartRender
+database "PostgreSQL" as DB
+database "S3/MinIO" as S3
+
+== Export PDF ==
+
+User -> Browser : Click "Export PDF"
+activate Browser
+
+Browser -> Browser : Show export options modal
+User -> Browser : Select options\n(include charts, keywords)
+Browser -> Browser : Validate options
+
+Browser -> Gateway : POST /api/analyses/{id}/export\n{format: "pdf", options: {...}}
+activate Gateway
+
+Gateway -> ExportCtrl : exportAnalysis(id, format, options)
+activate ExportCtrl
+
+ExportCtrl -> ExportCtrl : Validate user authorization
+ExportCtrl -> ExportSvc : generateExport(analysisId, 'pdf', options)
+activate ExportSvc
+
+ExportSvc -> DB : SELECT a.*, r.*\nFROM text_analyses a\nJOIN classification_results r\nON a.id = r.analysis_id\nWHERE a.id = ?
+activate DB
+DB --> ExportSvc : Analysis + Result data
+deactivate DB
+
+ExportSvc -> Template : loadTemplate('analysis-report')
+activate Template
+Template --> ExportSvc : HTML template
+deactivate Template
+
+ExportSvc -> Template : render(template, data)
+activate Template
+Template -> Template : Populate placeholders
+Template -> Template : Format dates/numbers
+Template --> ExportSvc : Rendered HTML
+deactivate Template
+
+group Generate Charts as Images
+    ExportSvc -> ChartRender : renderRadarChart(scores)
+    activate ChartRender
+    ChartRender -> ChartRender : Create Chart.js instance
+    ChartRender -> ChartRender : Render to canvas
+    ChartRender -> ChartRender : Export as PNG base64
+    ChartRender --> ExportSvc : radarChartBase64
+    deactivate ChartRender
+    
+    ExportSvc -> ChartRender : renderPoliticalCompass(scores)
+    activate ChartRender
+    ChartRender -> ChartRender : Create compass visualization
+    ChartRender -> ChartRender : Plot position
+    ChartRender -> ChartRender : Export as PNG base64
+    ChartRender --> ExportSvc : compassChartBase64
+    deactivate ChartRender
+end
+
+ExportSvc -> ExportSvc : Embed charts in HTML
+ExportSvc -> ExportSvc : Apply PDF styles
+
+ExportSvc -> PDFGen : htmlToPdf(html, options)
+activate PDFGen
+PDFGen -> PDFGen : Parse HTML
+PDFGen -> PDFGen : Apply CSS
+PDFGen -> PDFGen : Render pages
+PDFGen -> PDFGen : Generate PDF binary
+PDFGen --> ExportSvc : PDF ByteStream
+deactivate PDFGen
+
+ExportSvc -> ExportSvc : Calculate file size
+
+ExportSvc -> S3 : PUT /exports/{userId}/{analysisId}/report.pdf
+activate S3
+S3 --> ExportSvc : {url, etag}
+deactivate S3
+
+ExportSvc -> DB : INSERT INTO analysis_exports\n(analysis_id, format, file_path,\nfile_size, expires_at)
+activate DB
+DB --> ExportSvc : exportId
+deactivate DB
+
+ExportSvc --> ExportCtrl : ExportResult {\n  id: exportId,\n  url: signedUrl,\n  filename: "clasificare.pdf",\n  size: 245632,\n  expiresAt: ...}
+deactivate ExportSvc
+
+ExportCtrl --> Gateway : 200 OK {export}
+deactivate ExportCtrl
+
+Gateway --> Browser : {downloadUrl, filename}
+deactivate Gateway
+
+Browser -> Browser : Create download link
+Browser --> User : Start download\n"clasificare.pdf"
+
+deactivate Browser
+
+== Export CSV (Batch Results) ==
+
+User -> Browser : Click "Export CSV"\n(from batch results page)
+activate Browser
+
+Browser -> Gateway : POST /api/batches/{id}/export\n{format: "csv"}
+activate Gateway
+
+Gateway -> ExportCtrl : exportBatch(batchId, 'csv')
+activate ExportCtrl
+
+ExportCtrl -> ExportSvc : generateBatchExport(batchId, 'csv')
+activate ExportSvc
+
+ExportSvc -> DB : SELECT a.*, r.*\nFROM batch_analyses ba\nJOIN text_analyses a ON ba.analysis_id = a.id\nJOIN classification_results r ON a.id = r.analysis_id\nWHERE ba.batch_id = ?\nORDER BY ba.order_index
+activate DB
+DB --> ExportSvc : List<Analysis + Result>
+deactivate DB
+
+ExportSvc -> ExportSvc : Initialize CSV writer
+
+loop For each analysis
+    ExportSvc -> ExportSvc : Format row data
+    ExportSvc -> ExportSvc : Write CSV row
+end
+
+ExportSvc -> ExportSvc : Finalize CSV
+
+ExportSvc -> S3 : PUT /exports/{userId}/batch_{id}.csv
+activate S3
+S3 --> ExportSvc : {url}
+deactivate S3
+
+ExportSvc -> DB : INSERT INTO analysis_exports
+activate DB
+DB --> ExportSvc : OK
+deactivate DB
+
+ExportSvc --> ExportCtrl : ExportResult
+deactivate ExportSvc
+
+ExportCtrl --> Gateway : 200 OK
+deactivate ExportCtrl
+
+Gateway --> Browser : {downloadUrl}
+deactivate Gateway
+
+Browser --> User : Download batch_results.csv
+
+deactivate Browser
+
+== Export JSON (API) ==
+
+User -> Browser : Click "Export JSON"
+activate Browser
+
+Browser -> Gateway : GET /api/analyses/{id}/export?format=json
+activate Gateway
+
+Gateway -> ExportCtrl : exportAnalysis(id, 'json')
+activate ExportCtrl
+
+ExportCtrl -> ExportSvc : generateExport(id, 'json')
+activate ExportSvc
+
+ExportSvc -> DB : SELECT * FROM v_complete_analyses\nWHERE analysis_id = ?
+activate DB
+DB --> ExportSvc : Analysis data
+deactivate DB
+
+ExportSvc -> ExportSvc : Format as JSON
+ExportSvc -> ExportSvc : Add metadata\n(export date, version)
+
+ExportSvc --> ExportCtrl : JSON string
+deactivate ExportSvc
+
+ExportCtrl --> Gateway : 200 OK\nContent-Type: application/json\nContent-Disposition: attachment
+deactivate ExportCtrl
+
+Gateway --> Browser : JSON file
+deactivate Gateway
+
+Browser --> User : Download clasificare.json
+
+deactivate Browser
+
+note right of S3
+  Fișierele exportate sunt
+  șterse automat după 7 zile
+  pentru a economisi spațiu
+end note
+
+@enduml
+

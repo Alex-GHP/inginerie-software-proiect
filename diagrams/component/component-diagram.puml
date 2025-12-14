@@ -1,0 +1,215 @@
+@startuml component-diagram
+
+title Diagrama de Componente - Sistem Clasificare Ideologie Politica
+
+skinparam component {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+}
+
+skinparam interface {
+    BackgroundColor LightYellow
+}
+
+skinparam package {
+    BackgroundColor #F5F5F5
+}
+
+' =====================================================
+' STRATUL DE PREZENTARE
+' =====================================================
+package "Client Layer" #LightCyan {
+    
+    [Web Browser] as Browser
+    
+    package "Frontend Application" {
+        [Pages] as Pages
+        [Components] as Components
+        [State Management] as State
+        [API Client] as APIClient
+        [Chart Library] as Charts
+        
+        Pages --> Components
+        Pages --> State
+        Components --> Charts
+        Pages --> APIClient
+    }
+}
+
+' =====================================================
+' STRATUL API GATEWAY
+' =====================================================
+package "API Gateway Layer" #LightGreen {
+    
+    interface "REST API" as RestAPI
+    interface "WebSocket" as WS
+    
+    [NGINX Load Balancer] as NGINX
+    [Rate Limiter] as RateLimiter
+    [Request Validator] as Validator
+    
+    NGINX --> RateLimiter
+    RateLimiter --> Validator
+    NGINX -left- RestAPI
+    NGINX -right- WS
+}
+
+' =====================================================
+' STRATUL DE BUSINESS LOGIC
+' =====================================================
+package "Application Layer" #LightYellow {
+    
+    package "Controllers" {
+        [Auth Controller] as AuthCtrl
+        [Analysis Controller] as AnalysisCtrl
+        [Batch Controller] as BatchCtrl
+        [Admin Controller] as AdminCtrl
+        [Export Controller] as ExportCtrl
+    }
+    
+    package "Services" {
+        [Authentication Service] as AuthService
+        [Analysis Service] as AnalysisService
+        [Export Service] as ExportService
+        [Notification Service] as NotifService
+    }
+    
+    package "Domain Models" {
+        [User] as UserModel
+        [TextAnalysis] as AnalysisModel
+        [ClassificationResult] as ResultModel
+        [BatchJob] as BatchModel
+    }
+    
+    AuthCtrl --> AuthService
+    AnalysisCtrl --> AnalysisService
+    ExportCtrl --> ExportService
+    BatchCtrl --> AnalysisService
+    
+    AuthService --> UserModel
+    AnalysisService --> AnalysisModel
+    AnalysisService --> ResultModel
+}
+
+' =====================================================
+' STRATUL NLP
+' =====================================================
+package "ML NLP Layer" #LightPink {
+    
+    interface "NLP API" as NLPAPI
+    
+    [NLP Service] as NLPService
+    
+    package "ML Pipeline" {
+        [Text Preprocessor] as Preprocessor
+        [Transformer Model] as Model
+        [Keyword Extractor] as KeywordExt
+        [Result Postprocessor] as Postprocessor
+    }
+    
+    [Model Registry] as MLflow
+    [GPU Worker] as GPU
+    
+    NLPService -up- NLPAPI
+    NLPService --> Preprocessor
+    Preprocessor --> Model
+    Model --> KeywordExt
+    KeywordExt --> Postprocessor
+    Model --> GPU
+    NLPService --> MLflow
+}
+
+' =====================================================
+' STRATUL DE DATE
+' =====================================================
+package "Data Layer" #Lavender {
+    
+    database "PostgreSQL Primary" as PGPrimary {
+        [users]
+        [text_analyses]
+        [classification_results]
+        [batch_jobs]
+    }
+    
+    database "PostgreSQL Replica" as PGReplica
+    
+    database "Redis Cluster" as Redis {
+        [Session Cache]
+        [Result Cache]
+        [Rate Limit Store]
+    }
+    
+    database "MinIO S3" as S3 {
+        [Exported Files]
+        [ML Models]
+        [Uploaded Documents]
+    }
+    
+    [RabbitMQ Message Queue] as RabbitMQ
+    
+    PGPrimary --> PGReplica : replication
+}
+
+' =====================================================
+' STRATUL DE INFRASTRUCTURA
+' =====================================================
+package "Infrastructure" #LightGray {
+    [Prometheus] as Prometheus
+    [Grafana] as Grafana
+    [ELK Stack] as ELK
+    [Traefik] as Traefik
+    
+    Prometheus --> Grafana
+}
+
+' =====================================================
+' CONEXIUNI PRINCIPALE
+' =====================================================
+
+Browser --> NGINX : HTTPS
+
+Validator --> RestAPI
+Validator --> WS
+
+RestAPI --> AuthCtrl
+RestAPI --> AnalysisCtrl
+RestAPI --> BatchCtrl
+RestAPI --> AdminCtrl
+RestAPI --> ExportCtrl
+
+AnalysisService --> NLPAPI : gRPC HTTP
+AnalysisService --> RabbitMQ : publish
+
+AuthService --> Redis : sessions
+AnalysisService --> Redis : cache
+AnalysisService --> PGPrimary : write
+AnalysisService --> PGReplica : read
+
+ExportService --> S3 : store files
+NLPService --> S3 : load models
+
+NotifService --> RabbitMQ : consume
+NotifService --> WS : push
+
+AuthService ..> Prometheus : metrics
+AnalysisService ..> Prometheus : metrics
+NLPService ..> Prometheus : metrics
+
+AuthService ..> ELK : logs
+AnalysisService ..> ELK : logs
+NLPService ..> ELK : logs
+
+legend right
+  |= Component |= Technology |
+  | Frontend | Next.js 14 React 18 |
+  | API Gateway | NGINX FastAPI |
+  | Backend | Python 3.11 FastAPI |
+  | NLP | PyTorch Transformers |
+  | Database | PostgreSQL 16 |
+  | Cache | Redis 7 |
+  | Queue | RabbitMQ |
+  | Storage | MinIO S3 |
+  | Monitoring | Prometheus Grafana |
+endlegend
+
+@enduml

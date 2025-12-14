@@ -1,0 +1,135 @@
+@startuml user-state
+
+title Diagrama de Stare - Ciclul de Viata al Utilizatorului
+
+skinparam state {
+    BackgroundColor LightGreen
+    BorderColor DarkGreen
+    ArrowColor DarkGreen
+}
+
+[*] --> Inregistrat : completare formular inregistrare
+
+state Inregistrat {
+    [*] --> AsteptareConfirmare
+    AsteptareConfirmare : Email de confirmare trimis
+    AsteptareConfirmare : Token valid 24h
+}
+
+Inregistrat --> Activ : confirmare email
+Inregistrat --> Expirat : token expirat (24h)
+
+state Expirat {
+    [*] --> [*]
+}
+Expirat : Cont neconfirmat
+Expirat : Poate retrimite email
+
+Expirat --> Inregistrat : retrimite email confirmare
+Expirat --> Sters : stergere automata (7 zile)
+
+state Activ {
+    [*] --> Deconectat
+    
+    state Deconectat {
+        [*] --> AsteptareLogin
+        AsteptareLogin : Poate accesa login
+        AsteptareLogin : Poate reseta parola
+    }
+    
+    Deconectat --> Conectat : autentificare reusita
+    
+    state Conectat {
+        [*] --> Navigare
+        
+        state Navigare {
+            [*] --> Dashboard
+            Dashboard --> PaginaClasificare : acceseaza clasificare
+            PaginaClasificare --> Dashboard : inapoi
+            Dashboard --> Istoric : acceseaza istoric
+            Istoric --> Dashboard : inapoi
+            Dashboard --> Profil : acceseaza profil
+            Profil --> Dashboard : inapoi
+        }
+        
+        Navigare --> Inactiv : timeout inactivitate (15min)
+        Inactiv --> Navigare : activitate utilizator
+    }
+    
+    Conectat --> Deconectat : logout explicit
+    Conectat --> Deconectat : token expirat
+    Conectat --> Deconectat : invalidare sesiune
+}
+
+Activ --> Suspendat : suspendare admin
+Activ --> Suspendat : incalcare termeni
+
+state Suspendat {
+    [*] --> SuspendareTemporara
+    [*] --> SuspendarePermanenta
+    
+    SuspendareTemporara : Durata: 1-30 zile
+    SuspendareTemporara : Poate contesta
+    
+    SuspendarePermanenta : Acces interzis
+    SuspendarePermanenta : Poate apela
+}
+
+Suspendat --> Activ : ridicare suspendare
+Suspendat --> Sters : stergere cont
+
+state Sters {
+    [*] --> SoftDelete
+    SoftDelete : Retentie date: 30 zile
+    SoftDelete : Poate fi restaurat
+    
+    SoftDelete --> HardDelete : dupa 30 zile
+    
+    HardDelete : Date anonimizate
+    HardDelete : Statistici pastrate
+}
+
+Sters --> Activ : restaurare (in 30 zile)
+
+Activ --> AdminMode : promovare la admin
+AdminMode --> Activ : revocare drepturi admin
+
+state AdminMode {
+    [*] --> AdminActiv
+    
+    AdminActiv : Drepturi extinse
+    AdminActiv : Acces panou admin
+    AdminActiv : Gestionare utilizatori
+}
+
+note right of Inregistrat
+  Procesul de inregistrare:
+  1. Completare formular
+  2. Validare date
+  3. Trimitere email confirmare
+  4. Creare cont inactiv
+end note
+
+note left of Conectat
+  Sesiunea activa:
+  - Access token: 15 minute
+  - Refresh token: 7 zile
+  - Session storage: Redis
+end note
+
+note bottom of Suspendat
+  Motive suspendare:
+  - Spam sau abuz
+  - Incalcare ToS
+  - Activitate suspecta
+  - Solicitare utilizator
+end note
+
+note right of Sters
+  GDPR Compliance:
+  - Dreptul la uitare
+  - Anonimizare statistici
+  - Export date inainte
+end note
+
+@enduml

@@ -1,0 +1,206 @@
+@startuml er-diagram
+
+title Diagrama Entitate-Relatie - Baza de Date
+
+skinparam linetype ortho
+
+' =====================================================
+' ENTITATI
+' =====================================================
+
+entity "users" as users {
+    * id : UUID <<PK>>
+    --
+    * email : VARCHAR(255) <<UNIQUE>>
+    * password_hash : VARCHAR(255)
+    * name : VARCHAR(100)
+    * role : user_role <<ENUM>>
+    * is_active : BOOLEAN
+    * is_email_verified : BOOLEAN
+    profile_picture_url : VARCHAR(500)
+    * created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+    last_login : TIMESTAMP
+    deleted_at : TIMESTAMP
+}
+
+entity "text_analyses" as analyses {
+    * id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK>>
+    * text_content : TEXT
+    * text_hash : VARCHAR(64)
+    * language : VARCHAR(10)
+    * word_count : INTEGER
+    * status : analysis_status <<ENUM>>
+    source_filename : VARCHAR(255)
+    * created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+    completed_at : TIMESTAMP
+}
+
+entity "classification_results" as results {
+    * id : UUID <<PK>>
+    --
+    * analysis_id : UUID <<FK>> <<UNIQUE>>
+    * left_right_score : DECIMAL
+    * auth_lib_score : DECIMAL
+    * economic_score : DECIMAL
+    * social_score : DECIMAL
+    * confidence : DECIMAL
+    * quadrant : VARCHAR(50)
+    * keywords : JSONB
+    * model_version : VARCHAR(50)
+    * processing_time_ms : INTEGER
+    * created_at : TIMESTAMP
+}
+
+entity "batch_jobs" as batches {
+    * id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK>>
+    * name : VARCHAR(255)
+    * total_documents : INTEGER
+    * processed_documents : INTEGER
+    * failed_documents : INTEGER
+    * status : analysis_status <<ENUM>>
+    * created_at : TIMESTAMP
+    started_at : TIMESTAMP
+    completed_at : TIMESTAMP
+}
+
+entity "batch_analyses" as batch_analyses {
+    * id : UUID <<PK>>
+    --
+    * batch_id : UUID <<FK>>
+    * analysis_id : UUID <<FK>>
+    * order_index : INTEGER
+}
+
+entity "analysis_exports" as exports {
+    * id : UUID <<PK>>
+    --
+    * analysis_id : UUID <<FK>>
+    * user_id : UUID <<FK>>
+    * format : export_format <<ENUM>>
+    * file_path : VARCHAR(500)
+    * file_size_bytes : BIGINT
+    * created_at : TIMESTAMP
+    * expires_at : TIMESTAMP
+}
+
+entity "user_sessions" as sessions {
+    * id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK>>
+    * refresh_token_hash : VARCHAR(255)
+    * ip_address : VARCHAR(45)
+    * user_agent : VARCHAR(500)
+    * is_active : BOOLEAN
+    * created_at : TIMESTAMP
+    * expires_at : TIMESTAMP
+    * revoked_at : TIMESTAMP
+}
+
+entity "password_reset_tokens" as reset_tokens {
+    * id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK>>
+    * token_hash : VARCHAR(255)
+    * is_used : BOOLEAN
+    * created_at : TIMESTAMP
+    * expires_at : TIMESTAMP
+}
+
+entity "api_keys" as api_keys {
+    * id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK>>
+    * name : VARCHAR(100)
+    * key_hash : VARCHAR(255)
+    * last_used_at : TIMESTAMP
+    * is_active : BOOLEAN
+    * rate_limit : INTEGER
+    * created_at : TIMESTAMP
+    * expires_at : TIMESTAMP
+}
+
+entity "audit_logs" as audit_logs {
+    * id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK>>
+    * action : VARCHAR(50)
+    * resource_type : VARCHAR(50)
+    * resource_id : UUID
+    * ip_address : VARCHAR(45)
+    * details : JSONB
+    * created_at : TIMESTAMP
+}
+
+entity "system_settings" as settings {
+    * key : VARCHAR(100) <<PK>>
+    --
+    * value : JSONB
+    * description : TEXT
+    * updated_at : TIMESTAMP
+    * updated_by : UUID <<FK>>
+}
+
+' =====================================================
+' TIPURI ENUM
+' =====================================================
+
+note "ENUM: user_role\n- user\n- analyst\n- admin" as enum_role
+
+note "ENUM: analysis_status\n- pending\n- queued\n- processing\n- completed\n- failed\n- archived" as enum_status
+
+note "ENUM: export_format\n- pdf\n- csv\n- json\n- xlsx" as enum_format
+
+' =====================================================
+' RELATII
+' =====================================================
+
+users ||--o{ analyses : creates
+users ||--o{ batches : initiates
+users ||--o{ sessions : has
+users ||--o{ reset_tokens : requests
+users ||--o{ api_keys : owns
+users ||--o{ audit_logs : generates
+users ||--o{ exports : downloads
+
+analyses ||--o| results : produces
+analyses ||--o{ exports : exported as
+analyses }o--|| batches : part of
+
+batches ||--o{ batch_analyses : contains
+batch_analyses }o--|| analyses : references
+
+settings }o--o| users : updated by
+
+' =====================================================
+' INDEXURI
+' =====================================================
+
+note bottom of analyses
+  Indexuri:
+  - idx_analyses_user_id
+  - idx_analyses_status
+  - idx_analyses_created_at
+  - idx_analyses_text_hash
+end note
+
+note bottom of results
+  Indexuri:
+  - idx_results_analysis_id (unique)
+  - idx_results_quadrant
+  - idx_results_confidence
+end note
+
+note bottom of users
+  Indexuri:
+  - idx_users_email (unique)
+  - idx_users_role
+  - idx_users_is_active
+end note
+
+@enduml

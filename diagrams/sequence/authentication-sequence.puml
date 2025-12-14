@@ -1,0 +1,203 @@
+@startuml authentication-sequence
+
+title Diagrama de Secvență - Autentificare Utilizator
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 10
+skinparam maxmessagesize 180
+
+actor "Utilizator" as User
+participant "Browser\n(React)" as Browser
+participant "API Gateway\n(NGINX)" as Gateway
+participant "Auth\nController" as AuthCtrl
+participant "Auth\nService" as AuthSvc
+participant "Password\nHasher" as Hasher
+participant "JWT\nGenerator" as JWT
+database "PostgreSQL" as DB
+database "Redis" as Redis
+
+== Scenariul Principal: Autentificare Reușită ==
+
+User -> Browser : Accesează /login
+activate Browser
+Browser --> User : Afișare formular login
+
+User -> Browser : Introduce email + parolă
+Browser -> Browser : Validare client-side
+
+Browser -> Gateway : POST /api/auth/login\n{email, password}
+activate Gateway
+
+Gateway -> Gateway : Rate limit check\n(max 5 req/min/IP)
+
+Gateway -> AuthCtrl : login(credentials)
+activate AuthCtrl
+
+AuthCtrl -> AuthCtrl : Validate request schema
+AuthCtrl -> AuthSvc : authenticate(email, password)
+activate AuthSvc
+
+AuthSvc -> DB : SELECT * FROM users\nWHERE email = ?
+activate DB
+DB --> AuthSvc : UserEntity
+deactivate DB
+
+alt Utilizator nu există
+    AuthSvc --> AuthCtrl : throw AuthenticationException
+    AuthCtrl --> Gateway : 401 Unauthorized
+    Gateway --> Browser : {"error": "Invalid credentials"}
+    Browser --> User : "Email sau parolă incorectă"
+end
+
+AuthSvc -> Hasher : verify(password, storedHash)
+activate Hasher
+Hasher -> Hasher : bcrypt.compare()
+Hasher --> AuthSvc : isValid: true
+deactivate Hasher
+
+alt Parolă incorectă
+    AuthSvc -> DB : UPDATE users\nSET failed_login_attempts += 1
+    AuthSvc --> AuthCtrl : throw AuthenticationException
+    AuthCtrl --> Gateway : 401 Unauthorized
+    Gateway --> Browser : {"error": "Invalid credentials"}
+    Browser --> User : "Email sau parolă incorectă"
+end
+
+AuthSvc -> DB : SELECT is_active, is_email_verified\nFROM users
+activate DB
+DB --> AuthSvc : {is_active: true, is_email_verified: true}
+deactivate DB
+
+alt Cont inactiv sau neverificat
+    AuthSvc --> AuthCtrl : throw AccountDisabledException
+    AuthCtrl --> Gateway : 403 Forbidden
+    Gateway --> Browser : {"error": "Account disabled"}
+    Browser --> User : "Contul este dezactivat sau\nneverificat"
+end
+
+AuthSvc -> JWT : generateTokenPair(user)
+activate JWT
+JWT -> JWT : Create access token\n(exp: 15min)
+JWT -> JWT : Create refresh token\n(exp: 7 days)
+JWT --> AuthSvc : {accessToken, refreshToken}
+deactivate JWT
+
+AuthSvc -> Redis : SET session:{userId}:{sessionId}\n{ip, userAgent, createdAt}\nEX 604800
+activate Redis
+Redis --> AuthSvc : OK
+deactivate Redis
+
+AuthSvc -> DB : UPDATE users\nSET last_login = NOW(),\nfailed_login_attempts = 0
+activate DB
+DB --> AuthSvc : OK
+deactivate DB
+
+AuthSvc -> DB : INSERT INTO user_sessions\n(user_id, refresh_token_hash, ...)
+activate DB
+DB --> AuthSvc : sessionId
+deactivate DB
+
+AuthSvc --> AuthCtrl : TokenResponse {\n  accessToken,\n  refreshToken,\n  expiresIn: 900,\n  user: {...}\n}
+deactivate AuthSvc
+
+AuthCtrl --> Gateway : 200 OK {tokens, user}
+deactivate AuthCtrl
+
+Gateway --> Browser : Set-Cookie: refreshToken\n{tokens, user}
+deactivate Gateway
+
+Browser -> Browser : Store accessToken\nin memory
+Browser -> Browser : Set Authorization header
+Browser --> User : Redirect to /dashboard
+
+deactivate Browser
+
+== Scenariul Alternativ: Refresh Token ==
+
+User -> Browser : Access protected route\n(access token expired)
+activate Browser
+
+Browser -> Gateway : GET /api/protected\nAuthorization: Bearer <expired>
+activate Gateway
+Gateway --> Browser : 401 Token Expired
+deactivate Gateway
+
+Browser -> Gateway : POST /api/auth/refresh\nCookie: refreshToken
+activate Gateway
+
+Gateway -> AuthCtrl : refreshToken(token)
+activate AuthCtrl
+
+AuthCtrl -> AuthSvc : validateRefreshToken(token)
+activate AuthSvc
+
+AuthSvc -> DB : SELECT * FROM user_sessions\nWHERE refresh_token_hash = ?
+activate DB
+DB --> AuthSvc : Session (valid, not revoked)
+deactivate DB
+
+AuthSvc -> JWT : generateAccessToken(user)
+activate JWT
+JWT --> AuthSvc : newAccessToken
+deactivate JWT
+
+AuthSvc -> Redis : EXPIRE session:{...} 604800
+activate Redis
+Redis --> AuthSvc : OK
+deactivate Redis
+
+AuthSvc --> AuthCtrl : {accessToken, expiresIn}
+deactivate AuthSvc
+
+AuthCtrl --> Gateway : 200 OK {accessToken}
+deactivate AuthCtrl
+
+Gateway --> Browser : {accessToken}
+deactivate Gateway
+
+Browser -> Browser : Update accessToken
+Browser -> Gateway : Retry original request
+Browser --> User : Continue navigation
+
+deactivate Browser
+
+== Scenariul: Logout ==
+
+User -> Browser : Click "Logout"
+activate Browser
+
+Browser -> Gateway : POST /api/auth/logout\nAuthorization: Bearer <token>
+activate Gateway
+
+Gateway -> AuthCtrl : logout(token)
+activate AuthCtrl
+
+AuthCtrl -> AuthSvc : invalidateSession(userId, sessionId)
+activate AuthSvc
+
+AuthSvc -> Redis : DEL session:{userId}:{sessionId}
+activate Redis
+Redis --> AuthSvc : OK
+deactivate Redis
+
+AuthSvc -> DB : UPDATE user_sessions\nSET is_active = false,\nrevoked_at = NOW()
+activate DB
+DB --> AuthSvc : OK
+deactivate DB
+
+AuthSvc --> AuthCtrl : OK
+deactivate AuthSvc
+
+AuthCtrl --> Gateway : 204 No Content
+deactivate AuthCtrl
+
+Gateway --> Browser : Clear-Cookie: refreshToken
+deactivate Gateway
+
+Browser -> Browser : Clear accessToken\nfrom memory
+Browser --> User : Redirect to /login
+
+deactivate Browser
+
+@enduml
+

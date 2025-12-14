@@ -1,0 +1,126 @@
+@startuml main-use-cases
+
+title Diagrama Cazurilor de Utilizare - Sistem de Clasificare Ideologie Politica
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+' === Actori ===
+actor "Utilizator Anonim" as UA
+actor "Utilizator Autentificat" as UAuth
+actor "Administrator" as Admin
+actor "Sistem NLP" as NLP <<sistem>>
+
+' === Mostenire Actori ===
+UA <|-- UAuth
+UAuth <|-- Admin
+
+' === Sistem Principal ===
+rectangle "Sistem Clasificare Ideologie Politica" {
+    
+    ' --- Cazuri de utilizare pentru Autentificare ---
+    package "Autentificare si Inregistrare" {
+        usecase "Inregistrare cont" as UC_Register
+        usecase "Autentificare" as UC_Login
+        usecase "Resetare parola" as UC_ResetPwd
+        usecase "Deconectare" as UC_Logout
+        usecase "Validare credentiale" as UC_ValidateCred
+    }
+    
+    ' --- Cazuri de utilizare pentru Analiza ---
+    package "Analiza Text" {
+        usecase "Clasificare text" as UC_Classify
+        usecase "Incarcare text" as UC_Upload
+        usecase "Procesare batch" as UC_Batch
+        usecase "Selectare optiuni analiza" as UC_Options
+        usecase "Pre-procesare text" as UC_Preprocess
+        usecase "Clasificare NLP" as UC_NLPClassify
+    }
+    
+    ' --- Cazuri de utilizare pentru Rezultate ---
+    package "Vizualizare si Export" {
+        usecase "Vizualizare rezultate" as UC_ViewResults
+        usecase "Export PDF" as UC_ExportPDF
+        usecase "Export CSV" as UC_ExportCSV
+        usecase "Export JSON" as UC_ExportJSON
+        usecase "Generare grafice" as UC_Charts
+        usecase "Comparare analize" as UC_Compare
+    }
+    
+    ' --- Cazuri de utilizare pentru Istoric ---
+    package "Gestionare Istoric" {
+        usecase "Vizualizare istoric" as UC_History
+        usecase "Cautare in istoric" as UC_Search
+        usecase "Stergere analiza" as UC_Delete
+        usecase "Arhivare analiza" as UC_Archive
+    }
+    
+    ' --- Cazuri de utilizare pentru Administrare ---
+    package "Administrare" {
+        usecase "Gestionare utilizatori" as UC_ManageUsers
+        usecase "Vizualizare statistici" as UC_Stats
+        usecase "Configurare sistem" as UC_Config
+        usecase "Gestionare modele NLP" as UC_ManageModels
+    }
+}
+
+' === Relatii Utilizator Anonim ===
+UA --> UC_Register
+UA --> UC_Login
+UA --> UC_ResetPwd
+
+' === Relatii Utilizator Autentificat ===
+UAuth --> UC_Classify
+UAuth --> UC_Batch
+UAuth --> UC_ViewResults
+UAuth --> UC_History
+UAuth --> UC_Logout
+UAuth --> UC_Compare
+
+' === Relatii Administrator ===
+Admin --> UC_ManageUsers
+Admin --> UC_Stats
+Admin --> UC_Config
+Admin --> UC_ManageModels
+
+' === Relatii Sistem NLP ===
+NLP --> UC_NLPClassify
+NLP --> UC_Preprocess
+
+' === Include ===
+UC_Classify ..> UC_Upload : <<include>>
+UC_Classify ..> UC_Options : <<include>>
+UC_Classify ..> UC_Preprocess : <<include>>
+UC_Classify ..> UC_NLPClassify : <<include>>
+
+UC_Login ..> UC_ValidateCred : <<include>>
+
+UC_Batch ..> UC_Classify : <<include>>
+
+UC_ViewResults ..> UC_Charts : <<include>>
+
+' === Extend ===
+UC_ExportPDF ..> UC_ViewResults : <<extend>>
+UC_ExportCSV ..> UC_ViewResults : <<extend>>
+UC_ExportJSON ..> UC_ViewResults : <<extend>>
+
+UC_Search ..> UC_History : <<extend>>
+UC_Delete ..> UC_History : <<extend>>
+UC_Archive ..> UC_History : <<extend>>
+
+' === Note ===
+note right of UC_Classify
+  Cazul de utilizare principal
+  al sistemului. Permite
+  clasificarea textelor pe
+  spectrul politic.
+end note
+
+note right of NLP
+  Componenta externa
+  bazata pe modele
+  Transformer (BERT/RoBERTa)
+end note
+
+@enduml

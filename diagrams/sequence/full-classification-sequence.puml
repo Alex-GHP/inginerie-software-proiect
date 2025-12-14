@@ -1,0 +1,229 @@
+@startuml full-classification-sequence
+
+title Diagrama de Secvență Completă - Flux Clasificare Text
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 10
+skinparam maxmessagesize 180
+skinparam sequenceGroupBorderColor DarkBlue
+
+actor "Utilizator" as User
+participant "Browser\n(React)" as Browser
+participant "Next.js\nServer" as Next
+participant "API Gateway\n(NGINX)" as Gateway
+participant "Auth\nMiddleware" as Auth
+participant "Analysis\nController" as AnalysisCtrl
+participant "Analysis\nService" as AnalysisSvc
+participant "Queue\n(RabbitMQ)" as Queue
+participant "NLP\nWorker" as NLPWorker
+participant "NLP\nService" as NLP
+database "PostgreSQL" as DB
+database "Redis\nCache" as Redis
+
+== Faza 1: Încărcare Pagină și Autentificare ==
+
+User -> Browser : Accesează /classify
+activate Browser
+
+Browser -> Next : GET /classify
+activate Next
+Next -> Next : Server-side rendering
+Next -> Gateway : GET /api/user/me
+activate Gateway
+Gateway -> Auth : Validate JWT
+activate Auth
+Auth -> Redis : Check session
+activate Redis
+Redis --> Auth : Session valid
+deactivate Redis
+Auth --> Gateway : User context
+deactivate Auth
+Gateway --> Next : 200 OK {user}
+deactivate Gateway
+Next --> Browser : HTML + JS bundle
+deactivate Next
+
+Browser -> Browser : Hydrate React app
+Browser --> User : Afișare pagină clasificare
+
+== Faza 2: Introducere și Validare Text ==
+
+User -> Browser : Paste/Upload text
+Browser -> Browser : Client validation\n(length, format)
+
+alt Text prea scurt (< 100 caractere)
+    Browser --> User : Eroare: "Textul trebuie să aibă\nminim 100 caractere"
+else Text prea lung (> 50000 caractere)
+    Browser --> User : Eroare: "Textul nu poate depăși\n50000 caractere"
+else Text valid
+    Browser -> Browser : Detectare limbă (client-side)
+    Browser --> User : Preview text + statistici
+end
+
+User -> Browser : Click "Analizează"
+
+== Faza 3: Creare Analiză ==
+
+Browser -> Gateway : POST /api/analyses\n{text, language}
+activate Gateway
+
+Gateway -> Gateway : Rate limiting check
+Gateway -> Auth : Validate JWT
+activate Auth
+Auth --> Gateway : {userId, role}
+deactivate Auth
+
+Gateway -> AnalysisCtrl : Forward request
+activate AnalysisCtrl
+
+AnalysisCtrl -> AnalysisCtrl : Validate request body
+AnalysisCtrl -> AnalysisSvc : createAnalysis(userId, text, lang)
+activate AnalysisSvc
+
+AnalysisSvc -> AnalysisSvc : Calculate text hash
+AnalysisSvc -> Redis : GET analysis:{hash}
+activate Redis
+Redis --> AnalysisSvc : null (cache miss)
+deactivate Redis
+
+AnalysisSvc -> DB : INSERT INTO text_analyses
+activate DB
+DB --> AnalysisSvc : analysisId
+deactivate DB
+
+AnalysisSvc -> Queue : Publish analysis.process\n{analysisId}
+activate Queue
+Queue --> AnalysisSvc : ack
+deactivate Queue
+
+AnalysisSvc --> AnalysisCtrl : TextAnalysis {id, status: 'queued'}
+deactivate AnalysisSvc
+
+AnalysisCtrl --> Gateway : 202 Accepted
+deactivate AnalysisCtrl
+
+Gateway --> Browser : {analysisId, status: 'queued'}
+deactivate Gateway
+
+Browser -> Browser : Start polling /status/{id}
+Browser --> User : Afișare "Procesare în curs..."
+
+== Faza 4: Procesare Asincronă NLP ==
+
+Queue -> NLPWorker : Consume analysis.process
+activate NLPWorker
+
+NLPWorker -> DB : UPDATE status = 'processing'
+activate DB
+DB --> NLPWorker : OK
+deactivate DB
+
+NLPWorker -> DB : SELECT text_content
+activate DB
+DB --> NLPWorker : text
+deactivate DB
+
+NLPWorker -> NLP : POST /classify\n{text, language}
+activate NLP
+
+group Pre-procesare
+    NLP -> NLP : Tokenize text
+    NLP -> NLP : Normalize tokens
+    NLP -> NLP : Remove stopwords
+    NLP -> NLP : Prepare input tensors
+end
+
+group Clasificare ML
+    NLP -> NLP : Load BERT model
+    NLP -> NLP : Forward pass (GPU)
+    NLP -> NLP : Extract embeddings
+    NLP -> NLP : Compute axis scores
+end
+
+group Post-procesare
+    NLP -> NLP : Normalize scores [0,1]
+    NLP -> NLP : Calculate confidence
+    NLP -> NLP : Extract keywords (TF-IDF)
+    NLP -> NLP : Determine quadrant
+end
+
+NLP --> NLPWorker : ClassificationOutput {\n  leftRight: 0.35,\n  authLib: 0.62,\n  economic: 0.40,\n  social: 0.58,\n  confidence: 0.87,\n  keywords: ["democrație",\n    "social", "progres"],\n  processingTimeMs: 2341\n}
+deactivate NLP
+
+NLPWorker -> DB : INSERT INTO classification_results
+activate DB
+DB --> NLPWorker : resultId
+deactivate DB
+
+NLPWorker -> DB : UPDATE status = 'completed',\ncompleted_at = NOW()
+activate DB
+DB --> NLPWorker : OK
+deactivate DB
+
+NLPWorker -> Redis : SET analysis:{id} result TTL=3600
+activate Redis
+Redis --> NLPWorker : OK
+deactivate Redis
+
+NLPWorker -> Queue : ack message
+deactivate NLPWorker
+
+== Faza 5: Polling și Afișare Rezultate ==
+
+loop Polling (every 1s, max 30s)
+    Browser -> Gateway : GET /api/analyses/{id}/status
+    activate Gateway
+    Gateway -> AnalysisCtrl : getStatus(id)
+    activate AnalysisCtrl
+    AnalysisCtrl -> Redis : GET analysis:{id}
+    activate Redis
+    
+    alt Status = completed
+        Redis --> AnalysisCtrl : result data
+        deactivate Redis
+        AnalysisCtrl --> Gateway : {status: 'completed', result: {...}}
+        deactivate AnalysisCtrl
+        Gateway --> Browser : 200 OK {result}
+        deactivate Gateway
+        Browser -> Browser : Exit polling loop
+    else Status = processing
+        Redis --> AnalysisCtrl : null
+        AnalysisCtrl -> DB : SELECT status
+        DB --> AnalysisCtrl : 'processing'
+        AnalysisCtrl --> Gateway : {status: 'processing'}
+        Gateway --> Browser : 200 OK {status}
+        Browser --> User : Update progress indicator
+    end
+end
+
+Browser -> Browser : Parse result JSON
+Browser -> Browser : Generate radar chart
+Browser -> Browser : Generate political compass
+Browser -> Browser : Render keyword tags
+Browser --> User : Afișare rezultate complete
+
+== Faza 6: Export Opțional ==
+
+opt User wants PDF export
+    User -> Browser : Click "Export PDF"
+    Browser -> Gateway : GET /api/analyses/{id}/export?format=pdf
+    activate Gateway
+    Gateway -> AnalysisCtrl : exportAnalysis(id, 'pdf')
+    activate AnalysisCtrl
+    AnalysisCtrl -> AnalysisSvc : generatePDF(analysisId)
+    activate AnalysisSvc
+    AnalysisSvc -> AnalysisSvc : Render PDF template
+    AnalysisSvc -> AnalysisSvc : Embed charts as images
+    AnalysisSvc --> AnalysisCtrl : PDF binary
+    deactivate AnalysisSvc
+    AnalysisCtrl --> Gateway : application/pdf
+    deactivate AnalysisCtrl
+    Gateway --> Browser : PDF file
+    deactivate Gateway
+    Browser --> User : Download clasificare.pdf
+end
+
+deactivate Browser
+
+@enduml
+

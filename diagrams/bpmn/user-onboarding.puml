@@ -1,0 +1,140 @@
+@startuml user-onboarding
+
+title BPMN - Proces de Onboarding Utilizator Nou
+
+start
+
+:Accesare pagina inregistrare;
+
+:Afisare formular inregistrare;
+
+:Completare date personale;
+note right
+  Date necesare:
+  - Nume complet
+  - Adresa email
+  - Parola
+  - Confirmare parola
+end note
+
+:Validare date formular;
+
+fork
+    :Validare format email;
+fork again
+    :Validare complexitate parola;
+fork again
+    :Verificare potrivire parole;
+end fork
+
+if (Date valide?) then (nu)
+    :Afisare erori validare;
+    :Corectare date;
+    end
+else (da)
+endif
+
+:Trimitere date catre backend;
+
+:Primire cerere inregistrare;
+
+:Verificare email unic;
+
+if (Email exista?) then (da)
+    :Returnare eroare;
+    :Afisare Email deja inregistrat;
+    end
+else (nu)
+endif
+
+:Hash parola bcrypt;
+:Generare token confirmare;
+
+:Creare cont utilizator;
+:Status PENDING CONFIRMATION;
+:Salvare token confirmare;
+
+:Pregatire email confirmare;
+
+:Trimitere email confirmare;
+note right
+  Continut email:
+  - Link confirmare
+  - Instructiuni
+  - Expirare 24h
+end note
+
+:Afisare mesaj succes;
+:Instructiuni verificare email;
+
+:Verificare inbox email;
+
+if (Acceseaza link in timp util?) then (da)
+    :Click pe link confirmare;
+else (nu)
+    :Marcare token expirat;
+    :Afisare Link expirat;
+    
+    if (Retrimite email?) then (da)
+        :Generare token nou;
+        :Trimitere email nou;
+        :Verificare inbox;
+    else (nu)
+        end
+    endif
+endif
+
+:Procesare link confirmare;
+
+:Validare token;
+
+if (Token valid?) then (nu)
+    :Afisare eroare token;
+    end
+else (da)
+endif
+
+:Actualizare status ACTIVE;
+:Stergere token confirmare;
+:Setare data activare;
+
+:Generare token JWT;
+:Creare sesiune;
+
+:Trimitere email bun venit;
+note right
+  Email de bun venit:
+  - Ghid utilizare
+  - Functionalitati cheie
+  - Link suport
+end note
+
+:Redirectionare dashboard;
+:Afisare tour ghidat;
+
+:Parcurgere tutorial;
+
+fork
+    :Invatare navigare;
+fork again
+    :Prima clasificare demo;
+fork again
+    :Configurare profil;
+end fork
+
+:Finalizare onboarding;
+
+:Marcare onboarding complet;
+
+:Incepere utilizare aplicatie;
+
+stop
+
+legend bottom
+  Metrici Onboarding:
+  - Rata de conversie inregistrare confirmare: target 80 procent
+  - Timp mediu completare onboarding: target sub 5 minute
+  - Rata abandon formular: monitorizare sub 20 procent
+endlegend
+
+@enduml

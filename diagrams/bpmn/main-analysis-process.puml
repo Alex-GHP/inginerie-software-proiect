@@ -1,0 +1,168 @@
+@startuml main-analysis-process
+
+title BPMN - Proces Principal de Analiză Text
+
+skinparam swimlaneWidth 180
+skinparam defaultFontSize 11
+
+|#LightBlue|Utilizator|
+|#LightGreen|Interfață Web|
+|#LightYellow|Serviciu API|
+|#LightPink|Serviciu NLP|
+|#Lavender|Bază de Date|
+
+|Utilizator|
+start
+
+:Acces aplicație;
+
+|Interfață Web|
+:Verificare autentificare;
+
+if (Autentificat?) then (nu)
+    |Utilizator|
+    :Introducere credențiale;
+    |Interfață Web|
+    :Validare credențiale;
+    
+    if (Credențiale valide?) then (nu)
+        :Afișare eroare;
+        stop
+    else (da)
+        :Creare sesiune;
+    endif
+else (da)
+endif
+
+:Afișare dashboard;
+
+|Utilizator|
+:Navigare la clasificare;
+:Introducere text\nsau upload fișier;
+
+|Interfață Web|
+#Yellow:Validare input;
+note right
+  Gateway Paralel
+  - Validare lungime
+  - Validare format
+  - Detectare limbă
+end note
+
+if (Input valid?) then (nu)
+    :Afișare erori\nvalidare;
+    |Utilizator|
+    :Corectare input;
+    stop
+else (da)
+endif
+
+:Trimitere request analiză;
+
+|Serviciu API|
+:Primire request;
+:Autorizare utilizator;
+
+|Bază de Date|
+:Creare înregistrare\nTextAnalysis;
+:Status: PENDING;
+
+|Serviciu API|
+fork
+    :Actualizare status\n→ PROCESSING;
+fork again
+    :Trimitere la\nserviciul NLP;
+end fork
+
+|Serviciu NLP|
+#LightCoral:Pre-procesare text;
+note right
+  Sub-proces
+  - Tokenizare
+  - Normalizare  
+  - Curățare
+end note
+
+:Încărcare model\nTransformer;
+
+#LightCoral:Clasificare multi-dimensională;
+note right
+  Task paralele:
+  - Scor economic
+  - Scor social
+  - Scor autoritar
+  - Extragere keywords
+end note
+
+:Calcul nivel încredere;
+:Formatare rezultate;
+
+|Serviciu API|
+:Primire rezultate NLP;
+
+|Bază de Date|
+:Salvare ClassificationResult;
+:Actualizare status\n→ COMPLETED;
+
+|Serviciu API|
+:Formatare răspuns JSON;
+
+|Interfață Web|
+:Primire rezultate;
+
+fork
+    :Generare grafic radar;
+fork again
+    :Generare compas politic;
+fork again
+    :Afișare keywords;
+end fork
+
+:Afișare rezultate complete;
+
+|Utilizator|
+:Vizualizare rezultate;
+
+#Yellow:Decizie următoare acțiune;
+
+switch (Acțiune?)
+case (Export)
+    |Interfață Web|
+    :Afișare opțiuni export;
+    |Utilizator|
+    :Selectare format;
+    |Serviciu API|
+    :Generare fișier export;
+    |Interfață Web|
+    :Descărcare fișier;
+case (Comparare)
+    |Utilizator|
+    :Selectare alte texte;
+    |Interfață Web|
+    :Afișare comparație;
+case (Analiză nouă)
+    |Utilizator|
+    :Introducere text nou;
+    note right
+      Se reia procesul
+    end note
+case (Finalizare)
+endswitch
+
+|Utilizator|
+stop
+
+' === Legendă BPMN ===
+legend right
+  |= Simbol |= Semnificație |
+  | Start Event | Început proces |
+  | End Event | Sfârșit proces |
+  | Task | Activitate |
+  | Gateway (XOR) | Decizie exclusivă |
+  | Gateway (Paralel) | Execuție paralelă |
+  | Sub-process | Proces încapsulat |
+  | Swimlane | Responsabil proces |
+endlegend
+
+@enduml
+

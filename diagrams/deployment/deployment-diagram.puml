@@ -1,0 +1,215 @@
+@startuml deployment-diagram
+
+title Diagrama de Desfasurare - Sistem Clasificare Ideologie Politica
+
+skinparam node {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+}
+
+skinparam component {
+    BackgroundColor LightYellow
+}
+
+skinparam database {
+    BackgroundColor Lavender
+}
+
+' =====================================================
+' ZONA CLIENT
+' =====================================================
+node "Client Devices" as ClientZone {
+    node "Web Browser" as Browser {
+        component [React SPA] as ReactApp
+    }
+    
+    node "Mobile Browser" as MobileBrowser {
+        component [PWA] as PWA
+    }
+}
+
+' =====================================================
+' CDN LAYER
+' =====================================================
+cloud "CDN Cloudflare" as CDN {
+    component [Static Assets] as StaticAssets
+    component [Edge Caching] as EdgeCache
+}
+
+' =====================================================
+' LOAD BALANCER
+' =====================================================
+node "Load Balancer" as LB {
+    component [NGINX Reverse Proxy] as NGINX
+    component [SSL Termination] as SSL
+    component [Rate Limiting] as RateLimit
+}
+
+' =====================================================
+' KUBERNETES CLUSTER
+' =====================================================
+node "Kubernetes Cluster" as K8s {
+    
+    node "Frontend Pod x2" as FrontendPod {
+        component [Next.js Server] as NextServer
+        component [Node.js Runtime] as NodeRuntime
+    }
+    
+    node "API Pod x3" as APIPod {
+        component [FastAPI Application] as FastAPI
+        component [Uvicorn ASGI] as Uvicorn
+        component [Python 3.11] as Python
+    }
+    
+    node "NLP Pod x2" as NLPPod {
+        component [NLP Service] as NLPService
+        component [PyTorch Runtime] as PyTorch
+        component [CUDA 12] as CUDA
+        component [Transformer Model] as Model
+    }
+    
+    node "Worker Pod x2" as WorkerPod {
+        component [Celery Worker] as Celery
+        component [Task Processor] as TaskProcessor
+    }
+    
+    node "Ingress Controller" as Ingress {
+        component [Traefik] as Traefik
+    }
+}
+
+' =====================================================
+' DATABASE CLUSTER
+' =====================================================
+node "Database Cluster" as DBCluster {
+    
+    node "PostgreSQL Primary" as PGPrimary {
+        database "Main Database" as MainDB {
+            [users]
+            [text_analyses]
+            [classification_results]
+        }
+    }
+    
+    node "PostgreSQL Replica" as PGReplica {
+        database "Read Replica" as ReplicaDB
+    }
+    
+    PGPrimary --> PGReplica : Streaming Replication
+}
+
+' =====================================================
+' CACHE & QUEUE
+' =====================================================
+node "Cache Layer" as CacheLayer {
+    node "Redis Cluster x3" as RedisCluster {
+        database "Redis Master" as RedisMaster
+        database "Redis Replica 1" as RedisR1
+        database "Redis Replica 2" as RedisR2
+    }
+}
+
+node "Message Queue" as MQLayer {
+    node "RabbitMQ Cluster" as RabbitCluster {
+        component [RabbitMQ Node 1] as RMQ1
+        component [RabbitMQ Node 2] as RMQ2
+    }
+}
+
+' =====================================================
+' STORAGE
+' =====================================================
+cloud "Object Storage" as Storage {
+    node "MinIO AWS S3" as S3 {
+        database "Exported Files" as ExportBucket
+        database "ML Models" as ModelBucket
+        database "Uploads" as UploadBucket
+    }
+}
+
+' =====================================================
+' MONITORING
+' =====================================================
+node "Monitoring Stack" as MonitoringStack {
+    component [Prometheus] as Prometheus
+    component [Grafana] as Grafana
+    component [AlertManager] as AlertManager
+}
+
+node "Logging Stack" as LoggingStack {
+    component [Elasticsearch] as ES
+    component [Logstash] as Logstash
+    component [Kibana] as Kibana
+}
+
+' =====================================================
+' CONEXIUNI
+' =====================================================
+
+Browser --> CDN : HTTPS
+MobileBrowser --> CDN : HTTPS
+CDN --> LB : HTTPS
+
+LB --> Ingress : HTTP2
+
+Ingress --> FrontendPod
+Ingress --> APIPod
+APIPod --> NLPPod : gRPC
+APIPod --> WorkerPod : async
+
+APIPod --> PGPrimary : Write 5432
+APIPod --> PGReplica : Read 5432
+WorkerPod --> PGPrimary : Write
+
+APIPod --> RedisCluster : 6379
+NLPPod --> RedisCluster : Model Cache
+
+APIPod --> RabbitCluster : AMQP 5672
+WorkerPod --> RabbitCluster : Consume
+
+APIPod --> S3 : S3 API
+NLPPod --> S3 : Load Models
+
+APIPod ..> Prometheus : Metrics
+NLPPod ..> Prometheus : Metrics
+Prometheus --> Grafana
+Prometheus --> AlertManager
+
+APIPod ..> Logstash : Logs
+NLPPod ..> Logstash : Logs
+Logstash --> ES
+ES --> Kibana
+
+note right of NLPPod
+  GPU Requirements:
+  - NVIDIA Tesla T4 / A10G
+  - Min 16GB VRAM
+  - CUDA 12.x
+end note
+
+note bottom of K8s
+  Kubernetes Config:
+  - Namespace: political-nlp
+  - Auto-scaling: HPA based on CPU/memory
+  - Pod disruption budget: min 1 available
+end note
+
+note right of DBCluster
+  Database:
+  - PostgreSQL 16
+  - 100GB SSD storage
+  - Daily backups to S3
+  - Point-in-time recovery
+end note
+
+legend bottom left
+  |= Symbol |= Meaning |
+  | Node | Physical or virtual machine |
+  | Component | Deployed software |
+  | Database | Data storage |
+  | Cloud | External cloud service |
+  | Solid arrow | Primary communication |
+  | Dashed arrow | Monitoring logging |
+endlegend
+
+@enduml

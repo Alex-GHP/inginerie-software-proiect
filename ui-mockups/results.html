@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezultate Analiză - Clasificare Ideologie Politică</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-900">
+    
+    <!-- Sidebar (same as other pages) -->
+    <aside class="fixed inset-y-0 left-0 w-64 bg-slate-800 border-r border-slate-700">
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-700">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-white font-bold text-sm">Political NLP</h1>
+                <p class="text-slate-400 text-xs">Clasificare Ideologie</p>
+            </div>
+        </div>
+        
+        <nav class="px-4 py-6 space-y-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="classification.html" class="flex items-center gap-3 px-4 py-3 text-white bg-purple-500/20 rounded-xl border border-purple-500/30">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                </svg>
+                <span class="font-medium">Clasificare Text</span>
+            </a>
+            <a href="history.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Istoric Analize</span>
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="ml-64 p-8">
+        <!-- Header with Success Badge -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Rezultate Analiză</h1>
+                    <p class="text-slate-400 mt-1">Clasificare completată în 2.34 secunde</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="px-4 py-2 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500 rounded-xl transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    Partajează
+                </button>
+                <div class="relative">
+                    <button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Export
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Results Grid -->
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <!-- Political Compass -->
+            <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                <h3 class="text-lg font-semibold text-white mb-4">Compas Politic</h3>
+                <div class="aspect-square relative bg-slate-900 rounded-xl overflow-hidden">
+                    <!-- Quadrant Colors -->
+                    <div class="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                        <div class="bg-red-500/10"></div>
+                        <div class="bg-blue-500/10"></div>
+                        <div class="bg-green-500/10"></div>
+                        <div class="bg-yellow-500/10"></div>
+                    </div>
+                    
+                    <!-- Grid Lines -->
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full h-px bg-slate-600"></div>
+                    </div>
+                    <div class="absolute inset-0 flex justify-center">
+                        <div class="h-full w-px bg-slate-600"></div>
+                    </div>
+                    
+                    <!-- Position Marker -->
+                    <div class="absolute" style="left: 35%; top: 62%;">
+                        <div class="w-6 h-6 bg-purple-500 rounded-full border-4 border-white shadow-lg shadow-purple-500/50 animate-pulse"></div>
+                    </div>
+                    
+                    <!-- Labels -->
+                    <div class="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-slate-400 font-medium">AUTORITAR</div>
+                    <div class="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-slate-400 font-medium">LIBERTARIAN</div>
+                    <div class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium -rotate-90">STÂNGA</div>
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium rotate-90">DREAPTA</div>
+                </div>
+                
+                <!-- Position Details -->
+                <div class="mt-4 p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span class="text-green-400 font-semibold">Stânga Libertariană</span>
+                    </div>
+                    <p class="text-slate-400 text-sm">Poziție: Economic (-0.30), Social (-0.24)</p>
+                </div>
+            </div>
+            
+            <!-- Radar Chart -->
+            <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                <h3 class="text-lg font-semibold text-white mb-4">Analiză Multi-Dimensională</h3>
+                <div class="h-64">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Score Cards -->
+            <div class="space-y-4">
+                <!-- Confidence Score -->
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-slate-400 text-sm">Nivel de Încredere</span>
+                        <span class="text-emerald-400 font-bold text-2xl">87%</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full" style="width: 87%"></div>
+                    </div>
+                    <p class="text-slate-500 text-xs mt-2">Încredere ridicată în clasificare</p>
+                </div>
+                
+                <!-- Individual Scores -->
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                    <h4 class="text-white font-medium mb-4">Scoruri Individuale</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-slate-400">Economic (Stânga-Dreapta)</span>
+                                <span class="text-white">35%</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-red-500 rounded-full" style="width: 35%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-slate-400">Social (Autoritar-Libertarian)</span>
+                                <span class="text-white">38%</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 rounded-full" style="width: 38%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-slate-400">Progresist-Conservator</span>
+                                <span class="text-white">42%</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-purple-500 rounded-full" style="width: 42%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-slate-400">Naționalism-Globalism</span>
+                                <span class="text-white">55%</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-cyan-500 rounded-full" style="width: 55%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Keywords and Text Section -->
+        <div class="grid grid-cols-2 gap-6">
+            <!-- Keywords -->
+            <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                <h3 class="text-lg font-semibold text-white mb-4">Cuvinte Cheie Identificate</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-lg text-sm border border-purple-500/30">democrație</span>
+                    <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-lg text-sm border border-purple-500/30">social</span>
+                    <span class="px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-lg text-sm border border-purple-500/30">progres</span>
+                    <span class="px-3 py-1.5 bg-green-500/20 text-green-300 rounded-lg text-sm border border-green-500/30">egalitate</span>
+                    <span class="px-3 py-1.5 bg-green-500/20 text-green-300 rounded-lg text-sm border border-green-500/30">libertate</span>
+                    <span class="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-lg text-sm border border-cyan-500/30">drepturi</span>
+                    <span class="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-lg text-sm border border-cyan-500/30">cetățeni</span>
+                    <span class="px-3 py-1.5 bg-amber-500/20 text-amber-300 rounded-lg text-sm border border-amber-500/30">reformă</span>
+                    <span class="px-3 py-1.5 bg-pink-500/20 text-pink-300 rounded-lg text-sm border border-pink-500/30">justiție</span>
+                    <span class="px-3 py-1.5 bg-pink-500/20 text-pink-300 rounded-lg text-sm border border-pink-500/30">transparență</span>
+                </div>
+                
+                <!-- Word Frequency -->
+                <div class="mt-6">
+                    <h4 class="text-white font-medium mb-3">Frecvență Termeni</h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-slate-400 text-sm w-24">democrație</span>
+                            <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-purple-500 rounded-full" style="width: 85%"></div>
+                            </div>
+                            <span class="text-slate-400 text-sm">12</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-slate-400 text-sm w-24">social</span>
+                            <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-purple-500 rounded-full" style="width: 70%"></div>
+                            </div>
+                            <span class="text-slate-400 text-sm">9</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-slate-400 text-sm w-24">progres</span>
+                            <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-purple-500 rounded-full" style="width: 55%"></div>
+                            </div>
+                            <span class="text-slate-400 text-sm">7</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Original Text Preview -->
+            <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Text Analizat</h3>
+                    <span class="text-slate-400 text-sm">1,247 cuvinte</span>
+                </div>
+                <div class="bg-slate-900/50 rounded-xl p-4 max-h-64 overflow-y-auto">
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        "Democrația înseamnă mai mult decât simpla posibilitate de a vota. Ea presupune participare activă, transparență în actul de guvernare și respectarea drepturilor fundamentale ale tuturor cetățenilor. 
+                        
+                        Credem cu tărie în principiile egalității și justiției sociale. Reforma sistemului de educație și sănătate trebuie să fie prioritatea oricărui guvern care își propune să servească interesele poporului.
+                        
+                        Progresul economic nu poate fi realizat pe seama bunăstării sociale. Este esențial să găsim un echilibru între dezvoltarea economică și protecția celor mai vulnerabili membri ai societății..."
+                    </p>
+                </div>
+                
+                <!-- Analysis Metadata -->
+                <div class="mt-4 grid grid-cols-3 gap-4">
+                    <div class="text-center p-3 bg-slate-900/50 rounded-xl">
+                        <p class="text-2xl font-bold text-white">RO</p>
+                        <p class="text-slate-400 text-xs">Limba</p>
+                    </div>
+                    <div class="text-center p-3 bg-slate-900/50 rounded-xl">
+                        <p class="text-2xl font-bold text-white">2.34s</p>
+                        <p class="text-slate-400 text-xs">Timp procesare</p>
+                    </div>
+                    <div class="text-center p-3 bg-slate-900/50 rounded-xl">
+                        <p class="text-2xl font-bold text-white">v2.1</p>
+                        <p class="text-slate-400 text-xs">Model NLP</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions Footer -->
+        <div class="mt-8 flex items-center justify-between p-6 bg-slate-800 rounded-2xl border border-slate-700">
+            <div class="flex items-center gap-4">
+                <button class="px-4 py-2 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500 rounded-xl transition">
+                    ← Analiză Nouă
+                </button>
+                <button class="px-4 py-2 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500 rounded-xl transition">
+                    Compară cu Altă Analiză
+                </button>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="px-4 py-2 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500 rounded-xl transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export PDF
+                </button>
+                <button class="px-4 py-2 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500 rounded-xl transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export CSV
+                </button>
+                <button class="px-4 py-2 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500 rounded-xl transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export JSON
+                </button>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // Radar Chart
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Economic', 'Social', 'Autoritar', 'Libertarian', 'Progresist', 'Conservator'],
+                datasets: [{
+                    label: 'Scor',
+                    data: [35, 58, 25, 62, 58, 42],
+                    fill: true,
+                    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                    borderColor: 'rgba(168, 85, 247, 1)',
+                    pointBackgroundColor: 'rgba(168, 85, 247, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(168, 85, 247, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { 
+                            stepSize: 25,
+                            color: '#94a3b8',
+                            backdropColor: 'transparent'
+                        },
+                        grid: { color: 'rgba(255,255,255,0.1)' },
+                        pointLabels: { color: '#94a3b8' },
+                        angleLines: { color: 'rgba(255,255,255,0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Istoric Analize - Clasificare Ideologie Politică</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-slate-900">
+    <!-- Sidebar -->
+    <aside class="fixed inset-y-0 left-0 w-64 bg-slate-800 border-r border-slate-700">
+        <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-700">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <div><h1 class="text-white font-bold text-sm">Political NLP</h1></div>
+        </div>
+        <nav class="px-4 py-6 space-y-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="classification.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span>Clasificare Text</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-white bg-purple-500/20 rounded-xl border border-purple-500/30">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="font-medium">Istoric Analize</span>
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="ml-64 p-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Istoric Analize</h1>
+                <p class="text-slate-400 mt-1">Vizualizează și gestionează analizele anterioare</p>
+            </div>
+            <a href="classification.html" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Analiză Nouă
+            </a>
+        </div>
+        
+        <!-- Filters -->
+        <div class="bg-slate-800 rounded-2xl p-4 mb-6 border border-slate-700 flex items-center gap-4">
+            <div class="flex-1">
+                <input type="text" placeholder="Caută în analize..." class="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+            <select class="px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option>Toate cadroanele</option>
+                <option>Stânga Libertariană</option>
+                <option>Dreapta Libertariană</option>
+                <option>Stânga Autoritariană</option>
+                <option>Dreapta Autoritariană</option>
+            </select>
+            <select class="px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option>Ultima săptămână</option>
+                <option>Ultima lună</option>
+                <option>Ultimele 3 luni</option>
+                <option>Tot timpul</option>
+            </select>
+        </div>
+        
+        <!-- Table -->
+        <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+            <table class="w-full">
+                <thead><tr class="border-b border-slate-700">
+                    <th class="text-left text-xs font-medium text-slate-400 uppercase px-6 py-4">Text</th>
+                    <th class="text-left text-xs font-medium text-slate-400 uppercase px-6 py-4">Cadran</th>
+                    <th class="text-left text-xs font-medium text-slate-400 uppercase px-6 py-4">Încredere</th>
+                    <th class="text-left text-xs font-medium text-slate-400 uppercase px-6 py-4">Data</th>
+                    <th class="text-right text-xs font-medium text-slate-400 uppercase px-6 py-4">Acțiuni</th>
+                </tr></thead>
+                <tbody class="divide-y divide-slate-700">
+                    <tr class="hover:bg-slate-700/50 transition">
+                        <td class="px-6 py-4"><p class="text-white text-sm truncate max-w-xs">Discurs privind politica economică și măsurile sociale...</p><p class="text-slate-500 text-xs mt-1">1,247 cuvinte</p></td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-green-500/20 text-green-400">Stânga Libertariană</span></td>
+                        <td class="px-6 py-4"><div class="flex items-center gap-2"><div class="w-16 h-2 bg-slate-700 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width: 92%"></div></div><span class="text-slate-300 text-sm">92%</span></div></td>
+                        <td class="px-6 py-4 text-slate-400 text-sm">14 Dec 2024<br><span class="text-slate-500">10:32</span></td>
+                        <td class="px-6 py-4 text-right"><div class="flex items-center justify-end gap-2">
+                            <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>
+                            <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></button>
+                            <button class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                        </div></td>
+                    </tr>
+                    <tr class="hover:bg-slate-700/50 transition">
+                        <td class="px-6 py-4"><p class="text-white text-sm truncate max-w-xs">Analiză articol despre reforma fiscală și impozitare...</p><p class="text-slate-500 text-xs mt-1">856 cuvinte</p></td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-yellow-500/20 text-yellow-400">Dreapta Libertariană</span></td>
+                        <td class="px-6 py-4"><div class="flex items-center gap-2"><div class="w-16 h-2 bg-slate-700 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width: 88%"></div></div><span class="text-slate-300 text-sm">88%</span></div></td>
+                        <td class="px-6 py-4 text-slate-400 text-sm">13 Dec 2024<br><span class="text-slate-500">15:48</span></td>
+                        <td class="px-6 py-4 text-right"><div class="flex items-center justify-end gap-2">
+                            <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button>
+                            <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></button>
+                            <button class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                        </div></td>
+                    </tr>
+                    <tr class="hover:bg-slate-700/50 transition">
+                        <td class="px-6 py-4"><p class="text-white text-sm truncate max-w-xs">Declarație politică referitoare la securitate națională...</p><p class="text-slate-500 text-xs mt-1">2,103 cuvinte</p></td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-500/20 text-blue-400">Dreapta Autoritariană</span></td>
+                        <td class="px-6 py-4"><div class="flex items-center gap-2"><div class="w-16 h-2 bg-slate-700 rounded-full"><div class="h-full bg-amber-500 rounded-full" style="width: 76%"></div></div><span class="text-slate-300 text-sm">76%</span></div></td>
+                        <td class="px-6 py-4 text-slate-400 text-sm">11 Dec 2024<br><span class="text-slate-500">09:15</span></td>
+                        <td class="px-6 py-4 text-right"><div class="flex items-center justify-end gap-2">
+                            <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button>
+                            <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></button>
+                            <button class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                        </div></td>
+                    </tr>
+                </tbody>
+            </table>
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-slate-700 flex items-center justify-between">
+                <p class="text-slate-400 text-sm">Afișare 1-10 din 247 analize</p>
+                <div class="flex items-center gap-2">
+                    <button class="px-3 py-1 text-slate-400 hover:text-white border border-slate-600 rounded-lg">←</button>
+                    <button class="px-3 py-1 bg-purple-500 text-white rounded-lg">1</button>
+                    <button class="px-3 py-1 text-slate-400 hover:text-white border border-slate-600 rounded-lg">2</button>
+                    <button class="px-3 py-1 text-slate-400 hover:text-white border border-slate-600 rounded-lg">3</button>
+                    <button class="px-3 py-1 text-slate-400 hover:text-white border border-slate-600 rounded-lg">→</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+

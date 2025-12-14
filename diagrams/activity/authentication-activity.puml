@@ -1,0 +1,130 @@
+@startuml authentication-activity
+
+title Diagrama de Activitate - Proces de Autentificare
+
+|#LightBlue|Utilizator|
+|#LightGreen|Sistem Frontend|
+|#LightYellow|API Backend|
+|#Lavender|Bază de Date|
+
+|Utilizator|
+start
+:Accesează pagina de login;
+
+|Sistem Frontend|
+:Afișează formular de autentificare;
+
+|Utilizator|
+:Introduce email;
+:Introduce parolă;
+:Apasă buton "Autentificare";
+
+|Sistem Frontend|
+:Validare format email;
+:Validare lungime parolă;
+
+if (Format valid?) then (da)
+    :Criptare parolă (client-side hash);
+    :Trimite credențiale către API;
+else (nu)
+    :Afișează mesaje de validare;
+    |Utilizator|
+    :Corectează datele;
+    stop
+endif
+
+|API Backend|
+:Primește request de autentificare;
+:Extrage email și parolă;
+
+|Bază de Date|
+:Căutare utilizator după email;
+
+if (Utilizator există?) then (da)
+    |API Backend|
+    :Verificare parolă (bcrypt);
+else (nu)
+    |API Backend|
+    :Generare eroare generică;
+    note right
+        Nu dezvăluim dacă
+        emailul există sau nu
+    end note
+    |Sistem Frontend|
+    :Afișează "Credențiale invalide";
+    |Utilizator|
+    stop
+endif
+
+|API Backend|
+if (Parolă corectă?) then (da)
+    |Bază de Date|
+    :Verificare status cont;
+else (nu)
+    |Sistem Frontend|
+    :Afișează "Credențiale invalide";
+    |Utilizator|
+    stop
+endif
+
+|Bază de Date|
+if (Cont activ?) then (da)
+    |API Backend|
+    :Actualizare last_login;
+else (blocat)
+    |Sistem Frontend|
+    :Afișează "Cont blocat";
+    :Afișează instrucțiuni deblocare;
+    |Utilizator|
+    stop
+endif
+
+|API Backend|
+:Generare token JWT;
+:Generare refresh token;
+
+|Bază de Date|
+:Salvare sesiune;
+
+|API Backend|
+:Trimite tokens în răspuns;
+
+|Sistem Frontend|
+:Salvare tokens în localStorage;
+:Setare header Authorization;
+:Redirecționare către Dashboard;
+
+|Utilizator|
+:Vizualizare Dashboard;
+
+stop
+
+' === Flux Alternativ: Parolă Uitată ===
+partition "Flux Alternativ: Resetare Parolă" {
+    |Utilizator|
+    :Click pe "Am uitat parola";
+    
+    |Sistem Frontend|
+    :Afișează formular resetare;
+    
+    |Utilizator|
+    :Introduce adresa email;
+    
+    |API Backend|
+    :Generare token resetare;
+    :Trimite email cu link;
+    
+    |Utilizator|
+    :Accesează link din email;
+    :Introduce parolă nouă;
+    
+    |API Backend|
+    :Validare token;
+    :Actualizare parolă;
+    
+    |Sistem Frontend|
+    :Confirmare resetare;
+}
+
+@enduml
+
