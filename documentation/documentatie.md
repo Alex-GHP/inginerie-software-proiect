@@ -2,9 +2,8 @@
 
 ## Tema: Clasificarea Ideologiei și Poziției Politice utilizând tehnici avansate de NLP
 
-### Student: [Numele Studentului]
-### Specializare: [Specializarea]
-### An universitar: 2024-2025
+### Student: Morariu Alexandru-Gabriel
+### An universitar: 2025-2026
 
 ---
 

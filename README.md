@@ -2,9 +2,9 @@
 
 ## Tema: Clasificarea Ideologiei si Pozitiei Politice utilizand tehnici avansate de NLP
 
-### Student: [Numele Studentului]
+### Student: Morariu Alexandru-Gabriel
 ### Curs: Inginerie Software
-### An Universitar: 2024-2025
+### An Universitar: 2025-2026
 
 ---
 
@@ -161,7 +161,7 @@ Mockup-urile sunt create ca fisiere HTML standalone. Pentru vizualizare:
 ## Contact
 
 Pentru intrebari sau clarificari:
-- Email: [email student]
+- Email: alexandru.morariu@s.utm.ro
 - Profesor coordonator: marius.rogobete@yahoo.com
 
 ---
